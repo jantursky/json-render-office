@@ -10,3 +10,4 @@ export {
   type ImageWarning,
   type SourceKind,
 } from './images'
+export { validateProps, type PropDefinitions, type PropsIssue } from './validate'
