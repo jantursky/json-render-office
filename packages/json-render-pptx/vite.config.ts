@@ -13,7 +13,7 @@ const pkg = JSON.parse(readFileSync(root('package.json'), 'utf8')) as {
 const external = ['node:fs/promises', ...Object.keys(pkg.dependencies), ...Object.keys(pkg.peerDependencies)]
 
 export default defineConfig({
-  plugins: [dts({ tsconfigPath: './tsconfig.build.json', include: ['src'] })],
+  plugins: [dts({ tsconfigPath: './tsconfig.build.json', include: ['src'], bundleTypes: true })],
   build: {
     lib: {
       entry: { index: root('src/index.ts'), server: root('src/server.ts') },

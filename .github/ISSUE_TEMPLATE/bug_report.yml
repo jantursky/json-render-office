@@ -1,0 +1,52 @@
+name: Bug report
+description: A file looks wrong, will not open, or a render throws or does not match the docs.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. If the file is invalid or looks wrong only in one application, say which one and its version.
+  - type: dropdown
+    id: package
+    attributes:
+      label: Package
+      options:
+        - json-render-pptx
+        - json-render-docx
+        - json-render-report
+        - json-render-office
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you expected, and what you got instead. Include the error or warning message if there is one.
+    validations:
+      required: true
+  - type: textarea
+    id: spec
+    attributes:
+      label: Spec
+      description: The smallest json-render spec that shows the problem.
+      render: json
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Package version
+      placeholder: 1.0.0
+    validations:
+      required: true
+  - type: input
+    id: viewer
+    attributes:
+      label: Where the file was opened
+      description: PowerPoint, Word, Keynote, Pages, LibreOffice, Google Slides or Docs, and the version.
+  - type: input
+    id: environment
+    attributes:
+      label: Runtime
+      description: Node, browser or another runtime, plus the versions of vue and @json-render/core.
+      placeholder: Node 22.19, vue 3.5.x, @json-render/core 0.23.x

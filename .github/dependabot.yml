@@ -1,0 +1,21 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    ignore:
+      # Held at 5.9 until typescript-eslint and vue-tsc support a newer major.
+      - dependency-name: typescript
+        update-types: ['version-update:semver-major']
+    groups:
+      # The document engines release on their own schedule but each pairs with one renderer.
+      engines:
+        patterns: ['pptxgenjs', 'docx', 'vue-pptx-document', 'vue-docx-document']
+      dev-tooling:
+        dependency-type: development
+        update-types: [minor, patch]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

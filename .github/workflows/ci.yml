@@ -1,0 +1,175 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+      # Vitest's V8 coverage needs Node; `bun run` hands the tool binaries to it.
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - run: bun install --frozen-lockfile
+      - name: Format
+        run: bun run format:check
+      - name: Lint
+        run: bun run lint
+      - name: Typecheck
+        run: bun run typecheck
+      - name: Test with coverage
+        run: bun run test:coverage
+      - name: Upload json-render-office coverage to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/codecov-action@v7
+        with:
+          files: packages/json-render-office/coverage/lcov.info
+          flags: json-render-office
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
+      - name: Upload json-render-pptx coverage to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/codecov-action@v7
+        with:
+          files: packages/json-render-pptx/coverage/lcov.info
+          flags: json-render-pptx
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
+      - name: Upload json-render-docx coverage to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/codecov-action@v7
+        with:
+          files: packages/json-render-docx/coverage/lcov.info
+          flags: json-render-docx
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
+      - name: Upload json-render-report coverage to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/codecov-action@v7
+        with:
+          files: packages/json-render-report/coverage/lcov.info
+          flags: json-render-report
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
+
+  # The packages declare node >=20.19, so the tests also run on that version and on the newest LTS.
+  test:
+    name: Node ${{ matrix.node }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['20.19', 'lts/*']
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node }}
+      - run: bun install --frozen-lockfile
+      - run: bun run test
+
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - run: bun install --frozen-lockfile
+      - name: Build the packages, in dependency order
+        run: bun run build
+      - name: Size budgets
+        run: bun run size
+      - name: Check the packages (publint, type resolution)
+        run: bun run lint:package
+      - name: Install the packed tarballs and render from them
+        run: bun run test:pack
+
+  site:
+    name: Docs and example app
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - run: bun install --frozen-lockfile
+      - name: Build the docs
+        run: bun run build:docs
+      - name: End-to-end tests of the example app
+        run: |
+          bunx playwright install --with-deps chromium
+          bun run test:e2e
+      - name: Upload Playwright traces
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-traces
+          path: apps/example/test-results/
+          retention-days: 7
+
+  # LibreOffice is a test oracle only: it opens the generated files and lays them out. The
+  # packages never call it.
+  oracle:
+    name: LibreOffice oracle
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - run: bun install --frozen-lockfile
+      - name: Install LibreOffice and poppler
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libreoffice-writer libreoffice-impress poppler-utils
+      - run: bun run --filter json-render-report test:oracle
+
+  # The Open XML SDK validates the generated files against the ECMA-376 schemas, the same
+  # rules Microsoft Office applies when it opens them.
+  ooxml:
+    name: Open XML SDK validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+      # The fixture script imports a TypeScript file, which Node strips types from since 22.19.
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+      - run: bun install --frozen-lockfile
+      - run: bun run build
+      - name: Render the fixtures
+        run: node scripts/validate-ooxml/render-fixtures.mjs "$RUNNER_TEMP/ooxml"
+      - name: Validate them
+        run: dotnet run --project scripts/validate-ooxml/Validate.csproj -- "$RUNNER_TEMP/ooxml"

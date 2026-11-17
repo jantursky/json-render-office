@@ -7,6 +7,7 @@ const sibling = (name: string): string => resolve(import.meta.dirname, `../${nam
 export default defineConfig({
   resolve: {
     alias: {
+      'json-render-office/server': resolve(import.meta.dirname, '../json-render-office/src/server.ts'),
       'json-render-office': sibling('json-render-office'),
       'json-render-pptx': sibling('json-render-pptx'),
       'json-render-docx': sibling('json-render-docx'),

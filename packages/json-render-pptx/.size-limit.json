@@ -1,0 +1,17 @@
+[
+  {
+    "name": "Library code (engine and peers excluded)",
+    "path": "dist/index.js",
+    "ignore": ["vue", "node:fs/promises", "zod", "@json-render/core", "json-render-office", "vue-pptx-document"],
+    "gzip": true,
+    "limit": "4.6 kB"
+  },
+  {
+    "name": "With the engine, as a browser app ships it",
+    "path": "dist/index.js",
+    "import": "{ renderToBlob }",
+    "ignore": ["vue", "node:fs/promises"],
+    "gzip": true,
+    "limit": "225 kB"
+  }
+]

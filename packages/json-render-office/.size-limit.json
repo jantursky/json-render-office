@@ -1,0 +1,9 @@
+[
+  {
+    "name": "Library code (peers excluded)",
+    "path": "dist/index.js",
+    "ignore": ["vue", "@json-render/core"],
+    "gzip": true,
+    "limit": "2.4 kB"
+  }
+]

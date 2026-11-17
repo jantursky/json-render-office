@@ -64,7 +64,8 @@
     "test:coverage": "vitest run --coverage",
     "test:oracle": "ORACLE=1 vitest run test/oracle.test.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "lint:package": "publint --strict && attw --pack . --profile esm-only"
+    "lint:package": "publint --strict && attw --pack . --profile esm-only",
+    "size": "size-limit"
   },
   "dependencies": {
     "json-render-office": "^1.0.0",
@@ -78,6 +79,7 @@
     "zod": "^4.0.0"
   },
   "devDependencies": {
+    "@microsoft/api-extractor": "^7.60.1",
     "@arethetypeswrong/cli": "^0.18.5",
     "@json-render/core": "0.23.1",
     "@types/node": "^22",

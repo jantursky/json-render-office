@@ -3,7 +3,12 @@ import { resolve } from 'node:path'
 import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
-  resolve: { alias: { 'json-render-office': resolve(import.meta.dirname, '../json-render-office/src/index.ts') } },
+  resolve: {
+    alias: {
+      'json-render-office/server': resolve(import.meta.dirname, '../json-render-office/src/server.ts'),
+      'json-render-office': resolve(import.meta.dirname, '../json-render-office/src/index.ts'),
+    },
+  },
   test: {
     environment: 'node',
     include: ['test/**/*.test.ts'],

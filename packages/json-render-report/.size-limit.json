@@ -1,0 +1,33 @@
+[
+  {
+    "name": "Library code (engine and peers excluded)",
+    "path": "dist/index.js",
+    "ignore": [
+      "vue",
+      "node:fs/promises",
+      "zod",
+      "@json-render/core",
+      "@json-render/vue",
+      "json-render-office",
+      "json-render-pptx",
+      "json-render-docx"
+    ],
+    "gzip": true,
+    "limit": "2.9 kB"
+  },
+  {
+    "name": "Web page renderer (peers excluded)",
+    "path": "dist/web.js",
+    "ignore": ["vue", "json-render-office", "@json-render/core", "@json-render/vue"],
+    "gzip": true,
+    "limit": "2.7 kB"
+  },
+  {
+    "name": "With the engine, as a browser app ships it",
+    "path": "dist/index.js",
+    "import": "{ renderToPptxBlob, renderToDocxBlob }",
+    "ignore": ["vue", "node:fs/promises"],
+    "gzip": true,
+    "limit": "345 kB"
+  }
+]

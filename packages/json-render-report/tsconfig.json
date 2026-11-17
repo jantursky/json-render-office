@@ -6,7 +6,8 @@
     "paths": {
       "json-render-office": ["../json-render-office/src/index.ts"],
       "json-render-pptx": ["../json-render-pptx/src/index.ts"],
-      "json-render-docx": ["../json-render-docx/src/index.ts"]
+      "json-render-docx": ["../json-render-docx/src/index.ts"],
+      "json-render-office/server": ["../json-render-office/src/server.ts"]
     }
   },
   "include": ["src/**/*.ts", "test/**/*.ts", "vite.config.ts", "vitest.config.ts"]

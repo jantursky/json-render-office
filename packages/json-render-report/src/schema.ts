@@ -1,4 +1,4 @@
-import { COMMON_RULES, defineOfficeSchema } from 'json-render-office'
+import { COMMON_RULES, defineOfficeSchema } from 'json-render-office/server'
 
 /** The schema for json-render-report: one spec for the web page, the deck and the Word document. */
 export const schema = defineOfficeSchema([

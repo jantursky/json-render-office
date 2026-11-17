@@ -1,4 +1,4 @@
-import { COMMON_RULES, defineOfficeSchema } from 'json-render-office'
+import { COMMON_RULES, defineOfficeSchema } from 'json-render-office/server'
 
 /**
  * The schema for json-render-docx.

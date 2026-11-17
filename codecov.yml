@@ -10,6 +10,15 @@ coverage:
 comment:
   layout: 'condensed_header, diff, files'
   require_changes: true
+flags:
+  json-render-office:
+    paths: [packages/json-render-office/src/]
+  json-render-pptx:
+    paths: [packages/json-render-pptx/src/]
+  json-render-docx:
+    paths: [packages/json-render-docx/src/]
+  json-render-report:
+    paths: [packages/json-render-report/src/]
 ignore:
   - apps/**
-  - packages/vue-pdf-document/test/**
+  - packages/*/test/**

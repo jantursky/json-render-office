@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Problem inside the PowerPoint or Word writer
+    url: https://github.com/jantursky/vue-pptx-document/issues
+    about: If the same tree built with vue-pptx-document or vue-docx-document shows the problem, it belongs to that library.
+  - name: Question about json-render itself
+    url: https://github.com/vercel-labs/json-render/issues
+    about: The spec format, catalogs and the first-party renderers are maintained by the json-render project.
