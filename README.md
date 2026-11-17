@@ -8,6 +8,13 @@ A model writes a JSON spec that follows a catalog. These packages turn that spec
 
 [Docs](https://json-render-office-docs.vercel.app) · [Demo](https://json-render-office.vercel.app) · [Changelog](packages/json-render-report/CHANGELOG.md)
 
+<a href="https://json-render-office.vercel.app">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".github/assets/generator-dark.png">
+    <img alt="The report generator demo: a prompt box on the left, a live web preview of a quarterly review on the right" src=".github/assets/generator-light.png">
+  </picture>
+</a>
+
 ## Packages
 
 | Package                                             | What it does                                                                                              |
@@ -56,6 +63,15 @@ const docx = await renderToDocx(reportSpec)
 4. Images are loaded first (`images.ts`). Only `https:` URLs and `data:` images are read, with a timeout, a type check and a size cap.
 5. The standard components are thin wrappers over [vue-pptx-document](https://github.com/jantursky/vue-pptx-document) and [vue-docx-document](https://github.com/jantursky/vue-docx-document). Those libraries run a custom Vue renderer and write the file with PptxGenJS and `docx`.
 6. Slides never take coordinates. A slide layout and flexbox place the content, so the model does not have to guess positions. Long text can still overflow its box: the catalog limits (bullets per list, characters per title) are there to keep it in.
+
+## What comes out
+
+The same report spec as a deck and as a document, opened in LibreOffice:
+
+<p>
+  <img alt="The generated deck: a cover slide and chapter slides with bullets, a table and a native chart" src="apps/docs/public/gallery/one-spec-pptx.png" width="49%">
+  <img alt="The generated Word document: a title, a heading per chapter, a list and a table" src="apps/docs/public/gallery/one-spec-docx.png" width="49%">
+</p>
 
 ## Compatibility
 

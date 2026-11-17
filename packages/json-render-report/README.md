@@ -4,6 +4,8 @@ Render [json-render](https://github.com/vercel-labs/json-render) specs to a web 
 
 > Community project. Not affiliated with or endorsed by Vercel. "json-render" is the name of the Vercel Labs project this package renders for.
 
+![The report generator demo: a prompt, a live web preview and downloads](https://raw.githubusercontent.com/jantursky/json-render-office/main/.github/assets/generator-light.png)
+
 ## Install
 
 ```bash

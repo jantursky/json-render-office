@@ -27,7 +27,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "size": "bun run --filter 'json-render-*' size",
-    "check": "bun run format:check && bun run lint && bun run typecheck && bun run test:coverage"
+    "check": "bun run format:check && bun run lint && bun run typecheck && bun run test:coverage",
+    "screenshots": "node scripts/screenshots.js"
   },
   "devDependencies": {
     "@eslint/js": "^10",
