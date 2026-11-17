@@ -101,3 +101,15 @@ describe('preloadImages', () => {
     expect([...loaded.keys()]).toEqual([PNG])
   })
 })
+
+describe('preloadImages on a spec that has not started streaming', () => {
+  it('loads nothing', async () => {
+    const loaded = await preloadImages(
+      {} as Spec,
+      {},
+      () => Promise.reject(new Error('no')),
+      () => {},
+    )
+    expect(loaded.size).toBe(0)
+  })
+})

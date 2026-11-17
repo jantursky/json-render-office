@@ -53,7 +53,7 @@ export async function preloadImages(
   warn: (w: ImageWarning) => void,
 ): Promise<Map<string, string>> {
   const sources = new Set<string>()
-  for (const element of Object.values(spec.elements)) {
+  for (const element of Object.values(spec.elements ?? {})) {
     if (element.type !== 'Image') continue
     try {
       const props = resolveElementProps(element.props, { stateModel: state })

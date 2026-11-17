@@ -87,3 +87,11 @@ describe('consoleWarn', () => {
     spy.mockRestore()
   })
 })
+
+describe('a spec that has not started streaming', () => {
+  it('walks `{}` without throwing', () => {
+    const warnings: RenderWarning[] = []
+    expect(walkSpec({} as Spec, { registry: { Box }, state: {}, warn: (w) => warnings.push(w) })).toEqual([])
+    expect(warnings.map((w) => w.code)).toEqual(['missing-root'])
+  })
+})

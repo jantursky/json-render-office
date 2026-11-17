@@ -27,7 +27,7 @@ interface Scope {
 }
 
 function walkElement(key: string, spec: Spec, options: WalkOptions, scope: Scope): VNode[] {
-  const element = spec.elements[key]
+  const element = (spec.elements ?? {})[key]
   if (!element) {
     options.warn({ code: 'missing-element', message: `Element "${key}" is not in the spec (yet).`, element: key })
     return []
@@ -86,7 +86,8 @@ function renderChildren(element: UIElement, spec: Spec, options: WalkOptions, sc
  * missing children and unknown types are skipped with a warning, so a half-streamed spec renders.
  */
 export function walkSpec(spec: Spec, options: WalkOptions): VNode[] {
-  if (!spec.root || !(spec.root in spec.elements)) {
+  // A stream starts as `{}`: neither `root` nor `elements` exist until the first patch lands.
+  if (!spec.root || !(spec.root in (spec.elements ?? {}))) {
     options.warn({ code: 'missing-root', message: 'The spec has no root element yet.' })
     return []
   }
