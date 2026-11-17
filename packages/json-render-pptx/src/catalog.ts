@@ -28,10 +28,27 @@ export const standardComponentDefinitions = {
         ),
       background: color.describe('Hex background color. Null uses the theme.'),
       notes: z.string().max(2000).nullable().describe('Speaker notes.'),
+      slideNumber: z.boolean().nullable().describe('Show the slide number in the bottom right corner.'),
     }),
     slots: ['default'],
     description: 'One slide. Children are stacked top to bottom in reading order. Put the Title first.',
     example: { layout: 'title-content' },
+  },
+
+  Columns: {
+    props: z.object({
+      gap: z.number().min(0).max(1).nullable().describe('Inches between columns. Default 0.4.'),
+    }),
+    slots: ['default'],
+    description: 'Places its children side by side in equal widths. Children must be Column components; use 2 or 3.',
+    example: { gap: 0.4 },
+  },
+
+  Column: {
+    props: z.object({}),
+    slots: ['default'],
+    description: 'One column inside Columns. Holds Subtitle, Text, BulletList, Table, Chart or Image elements.',
+    example: {},
   },
 
   Title: {

@@ -38,12 +38,16 @@ export const deckSpec = (): Spec => ({
     deck: { type: 'Deck', props: { title: 'Review', author: null, subject: null }, children: ['cover', 'content'] },
     cover: {
       type: 'Slide',
-      props: { layout: 'title', background: null, notes: 'Welcome everyone.' },
+      props: { layout: 'title', background: null, notes: 'Welcome everyone.', slideNumber: null },
       children: ['coverTitle', 'coverSub'],
     },
     coverTitle: { type: 'Title', props: { text: 'Quarterly review', align: null, color: null }, children: [] },
     coverSub: { type: 'Subtitle', props: { text: 'Q3 2026', align: null, color: null }, children: [] },
-    content: { type: 'Slide', props: { layout: null, background: null, notes: null }, children: ['title', 'bullets'] },
+    content: {
+      type: 'Slide',
+      props: { layout: null, background: null, notes: null, slideNumber: null },
+      children: ['title', 'bullets'],
+    },
     title: { type: 'Title', props: { text: 'What changed', align: null, color: null }, children: [] },
     bullets: {
       type: 'BulletList',

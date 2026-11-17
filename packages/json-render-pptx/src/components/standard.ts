@@ -6,6 +6,7 @@ import {
   Paragraph,
   Presentation,
   Slide as PptxSlide,
+  View,
   Table as PptxTable,
   Text as PptxText,
 } from 'vue-pptx-document'
@@ -73,6 +74,9 @@ const SlideComponent = defineComponent({
           background: optional(p.background) ?? (onAccent ? theme.colors.accent : theme.colors.background),
           color: onAccent ? theme.colors.onAccent : theme.colors.text,
           notes: optional(p.notes),
+          slideNumber: p.slideNumber
+            ? { x: 9, y: 5.15, w: 0.6, h: 0.3, fontSize: 12, color: theme.colors.muted, align: 'right' }
+            : undefined,
           style: {
             padding: layout === 'blank' ? 0 : 0.6,
             gap: 0.25,
@@ -150,6 +154,12 @@ const BulletList = defineStandard('BulletList', (p, _children, { theme }) =>
   ),
 )
 
+const Columns = defineStandard('Columns', (p, children) =>
+  h(View, { style: { flexDirection: 'row', flexGrow: 1, gap: p.gap ?? 0.4 } }, () => children),
+)
+
+const Column = defineStandard('Column', (_p, children) => h(View, { style: { flex: 1, gap: 0.2 } }, () => children))
+
 const Table = defineStandard('Table', (p, _children, { theme }) => {
   const columns = p.columns.length
   const header = p.columns.map((text) => ({
@@ -222,6 +232,8 @@ export const standardComponents: Record<string, Component> = {
   Subtitle,
   Text,
   BulletList,
+  Columns,
+  Column,
   Table,
   Chart,
   Image: ImageComponent,

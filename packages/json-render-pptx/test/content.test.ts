@@ -12,7 +12,7 @@ const slide = (...elements: Record<string, Spec['elements'][string]>[]): Spec =>
     deck: { type: 'Deck', props: { title: null, author: null, subject: null }, children: ['slide'] },
     slide: {
       type: 'Slide',
-      props: { layout: null, background: null, notes: null },
+      props: { layout: null, background: null, notes: null, slideNumber: null },
       children: elements.flatMap((e) => Object.keys(e)),
     },
     ...Object.assign({}, ...elements),
@@ -131,5 +131,41 @@ describe('Image', () => {
     })
     expect(out.warnings).toContainEqual(expect.objectContaining({ code: 'image-failed' }))
     expect(out.xml('ppt/slides/slide1.xml')).not.toContain('<p:pic>')
+  })
+})
+
+describe('Columns', () => {
+  it('places each column next to the other', async () => {
+    const spec = slide({
+      cols: { type: 'Columns', props: { gap: null }, children: ['a', 'b'] },
+      a: { type: 'Column', props: {}, children: ['ta'] },
+      b: { type: 'Column', props: {}, children: ['tb'] },
+      ta: {
+        type: 'Text',
+        props: { text: 'Left side', fontSize: null, bold: null, italic: null, align: null, color: null },
+        children: [],
+      },
+      tb: {
+        type: 'Text',
+        props: { text: 'Right side', fontSize: null, bold: null, italic: null, align: null, color: null },
+        children: [],
+      },
+    })
+    spec.elements.slide!.children = ['cols']
+    const xml = (await render(spec)).xml('ppt/slides/slide1.xml')
+    // The x offset of the shape that holds the text.
+    const offset = (text: string): number => {
+      const shape = xml.split('<p:sp>').find((part) => part.includes(text))
+      return Number(/<a:off x="(\d+)"/.exec(shape ?? '')?.[1])
+    }
+    expect(offset('Right side')).toBeGreaterThan(offset('Left side'))
+  })
+})
+
+describe('Slide number', () => {
+  it('shows the number when asked', async () => {
+    const spec = slide()
+    spec.elements.slide!.props = { layout: null, background: null, notes: null, slideNumber: true }
+    expect((await render(spec)).xml('ppt/slides/slide1.xml')).toContain('type="slidenum"')
   })
 })
