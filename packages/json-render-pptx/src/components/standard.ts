@@ -180,7 +180,7 @@ const Table = defineStandard('Table', (p, _children, { theme }) => {
     fontSize: p.fontSize ?? 14,
     color: theme.colors.text,
     valign: 'middle',
-    border: { type: 'solid', pt: 0.5, color: 'D4D4D4' },
+    border: { type: 'solid', pt: 0.5, color: theme.colors.rule },
     margin: 0.08,
     style: { flexShrink: 0 },
   })

@@ -4,7 +4,7 @@
 
 # json-render-docx
 
-Render [json-render](https://github.com/vercel-labs/json-render) specs to Word (.docx) files. Text, tables and charts are real Office objects, so the result stays editable. Works in Node and the browser.
+Render [json-render](https://github.com/vercel-labs/json-render) specs to Word (.docx) files. Text, lists and tables are real Office objects, so the result stays editable. Works in Node and the browser.
 
 > Community project. Not affiliated with or endorsed by Vercel. "json-render" is the name of the Vercel Labs project this package renders for.
 

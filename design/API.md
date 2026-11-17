@@ -4,11 +4,11 @@ Community renderers that turn a json-render spec into editable Office files. Not
 
 ## Packages
 
-| Package                      | Built on            | Output                              |
-| ---------------------------- | ------------------- | ----------------------------------- |
-| `json-render-pptx`           | `vue-pptx-document` | `.pptx`                             |
-| `json-render-docx`           | `vue-docx-document` | `.docx`                             |
-| `json-render-office` (later) | both                | shared theme, units, report catalog |
+| Package              | Built on            | Output                                             |
+| -------------------- | ------------------- | -------------------------------------------------- |
+| `json-render-pptx`   | `vue-pptx-document` | `.pptx`                                            |
+| `json-render-docx`   | `vue-docx-document` | `.docx`                                            |
+| `json-render-office` | both                | shared walker, image loading, theme, schema helper |
 
 ## Entry points (same shape as `@json-render/react-pdf`)
 
@@ -31,20 +31,19 @@ export interface RenderOptions {
 export function renderToBuffer(spec, options?): Promise<Uint8Array>
 export function renderToBlob(spec, options?): Promise<Blob>
 export function renderToFile(spec, path, options?): Promise<void>   // Node only, lazy fs import
-export function defineRegistry(catalog, { components }): { registry }
 ```
 
 ## Rendering
 
 1. `spec.state` merged with `options.state`; each element's `visible` and prop expressions (`$state`, `$cond`, `$template`, `repeat`) are resolved with `@json-render/core` helpers.
-2. A Vue component walks the spec from `root` and creates `h(registry[type], props, children)`. Missing roots, missing child keys and unknown types are skipped and reported through `onWarn`, so partial specs never throw.
+2. A Vue component walks the spec from `root` and creates `h(registry[type], props, children)`. Missing roots, missing child keys and unknown types are skipped and reported through `onWarn`, so partial specs render. Props that fail their component's schema, cycles and `repeat` over a non-list are skipped with a warning too.
 3. The tree is mounted with `vue-pptx-document` and written to a buffer.
-4. Standard components wrap vue-pptx primitives. Slide layouts (`title`, `title-content`, `two-column`, `section`, `blank`) place children into fixed regions, so the model never emits coordinates.
+4. Standard components wrap vue-pptx primitives. Slide layouts (`title`, `title-content`, `section`, `blank`) place children into fixed regions, so the model never emits coordinates.
 
 ## Standard components, first pass
 
-pptx: `Deck` (root), `Slide`, `Title`, `Subtitle`, `Text`, `BulletList`, `Image`, `Table`, `Chart`, `Shape`, `SpeakerNotes`, `SlideNumber`.
-docx: `Document` (root), `Section`, `Heading`, `Paragraph`, `List`, `Table`, `Image`, `PageBreak`, `Header`, `Footer`, `PageNumber`, `TableOfContents`. No `Chart` in v1.
+pptx: `Deck` (root), `Slide`, `Title`, `Subtitle`, `Text`, `BulletList`, `Image`, `Table`, `Chart`, `Columns`, `Column`. Notes and slide numbers are props of `Slide`.
+docx: `Document` (root), `Section`, `Heading`, `Paragraph`, `List`, `Table`, `Image`, `PageBreak`, `Header`, `Footer`, `TableOfContents`. No `Chart` in v1.
 
 Optional props use `.nullable()` (strict JSON Schema, as in the first-party renderers). Limits live in the Zod schemas: bullets per slide, characters per title and bullet, rows and columns per table.
 

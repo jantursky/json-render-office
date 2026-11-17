@@ -94,4 +94,37 @@ describe('a spec that has not started streaming', () => {
     expect(walkSpec({}, { registry: { Box }, state: {}, warn: (w) => warnings.push(w) })).toEqual([])
     expect(warnings.map((w) => w.code)).toEqual(['missing-root'])
   })
+  it('stops a cycle with a warning', () => {
+    const { warnings } = run({ root: 'a', elements: { a: { type: 'Box', props: {}, children: ['a'] } } })
+    expect(warnings.map((w) => w.code)).toEqual(['cycle'])
+  })
+
+  it('warns when a repeat path is not a list', () => {
+    const spec: Spec = {
+      root: 'a',
+      elements: {
+        a: { type: 'Box', props: {}, children: ['b'], repeat: { statePath: '/x' } },
+        b: { type: 'Box', props: {} },
+      },
+    }
+    expect(run(spec, { x: 'abc' }).warnings.map((w) => w.code)).toEqual(['bad-repeat'])
+    expect(run(spec, { x: { a: 1 } }).warnings.map((w) => w.code)).toEqual(['bad-repeat'])
+  })
+
+  it('does not take types or roots from Object.prototype', () => {
+    expect(run({ root: 'toString', elements: {} }).warnings.map((w) => w.code)).toEqual(['missing-root'])
+    const spec: Spec = { root: 'a', elements: { a: { type: 'toString', props: {} } } }
+    expect(run(spec).warnings.map((w) => w.code)).toEqual(['unknown-type'])
+  })
+
+  it('skips an element whose props fail its definition', () => {
+    const warnings: RenderWarning[] = []
+    const props = { safeParse: (v: unknown) => ({ success: Array.isArray((v as { items?: unknown }).items) }) }
+    const nodes = walkSpec(
+      { root: 'a', elements: { a: { type: 'Box', props: {} } } },
+      { registry: { Box }, state: {}, warn: (w) => warnings.push(w), definitions: { Box: { props } } },
+    )
+    expect(nodes).toEqual([])
+    expect(warnings.map((w) => w.code)).toEqual(['bad-props'])
+  })
 })

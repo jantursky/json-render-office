@@ -17,6 +17,7 @@ import {
   renderToBuffer as docxRenderToBuffer,
 } from 'vue-docx-document'
 
+import { standardComponentDefinitions } from './catalog'
 import { IMAGES, THEME } from './components/context'
 import { standardComponents } from './components/standard'
 import { resolveTheme, type ThemeInput } from './theme'
@@ -49,6 +50,7 @@ export function createDocument(
     registry: { ...(options.includeStandard === false ? {} : standardComponents), ...options.registry },
     state: { ...spec.state, ...options.state },
     warn,
+    definitions: standardComponentDefinitions,
   }
 
   return defineComponent({

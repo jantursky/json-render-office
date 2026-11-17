@@ -13,7 +13,7 @@ import { walkSpec, preloadImages, resolveBaseTheme, validateProps } from 'json-r
 ```
 
 - `walkSpec(spec, { registry, state, warn })` turns a spec into Vue nodes. A missing root, missing children and unknown types are skipped with a warning.
-- `preloadImages` loads `https:` and `data:` images with a timeout, a type check and a 10 MB cap. Everything else is blocked.
+- `preloadImages` loads `https:` and `data:` images with a timeout, a type check, a 10 MB cap and a limit of 50 images. It does not block private network addresses; pass a `loadImage` with an allowlist for untrusted specs. Everything else is blocked.
 - `resolveBaseTheme` merges a partial theme over the defaults.
 
 > Community project. Not affiliated with or endorsed by Vercel.

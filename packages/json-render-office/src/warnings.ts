@@ -1,5 +1,12 @@
 export type WarningCode =
-  'missing-root' | 'missing-element' | 'unknown-type' | 'bad-props' | 'bad-repeat' | 'blocked-image' | 'image-failed'
+  | 'missing-root'
+  | 'missing-element'
+  | 'unknown-type'
+  | 'bad-props'
+  | 'bad-repeat'
+  | 'cycle'
+  | 'blocked-image'
+  | 'image-failed'
 
 export interface RenderWarning {
   code: WarningCode

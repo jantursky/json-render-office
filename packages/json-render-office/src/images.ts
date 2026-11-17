@@ -6,6 +6,8 @@ export type ImageLoader = (src: string) => Promise<string>
 
 export const MAX_IMAGE_BYTES = 10 * 1024 * 1024
 export const IMAGE_TIMEOUT_MS = 10_000
+/** More distinct images than this in one spec are refused, so a spec cannot start unlimited fetches. */
+export const MAX_IMAGES = 50
 
 const DATA_IMAGE = /^data:image\/(?:png|jpe?g|gif|svg\+xml);base64,[a-z0-9+/=\s]+$/i
 
@@ -24,15 +26,44 @@ function toBase64(bytes: Uint8Array): string {
   return btoa(binary)
 }
 
-/** Fetches an https image with a timeout, a status check, a type check and a size cap. */
+async function readCapped(response: Response): Promise<Uint8Array> {
+  const declared = Number(response.headers.get('content-length'))
+  if (declared > MAX_IMAGE_BYTES) throw new Error('Image is larger than 10 MB')
+  const reader = response.body?.getReader()
+  if (!reader) return new Uint8Array(await response.arrayBuffer())
+  const chunks: Uint8Array[] = []
+  let total = 0
+  for (;;) {
+    const { done, value } = await reader.read()
+    if (done) break
+    total += value.length
+    if (total > MAX_IMAGE_BYTES) {
+      await reader.cancel()
+      throw new Error('Image is larger than 10 MB')
+    }
+    chunks.push(value)
+  }
+  const bytes = new Uint8Array(total)
+  let at = 0
+  for (const chunk of chunks) {
+    bytes.set(chunk, at)
+    at += chunk.length
+  }
+  return bytes
+}
+
+/**
+ * Fetches an https image with a timeout, a status check, a type check and a size cap that is
+ * enforced while the body streams. A redirect to anything but https is refused. It does not block
+ * private network addresses: pass a `loadImage` with a host allowlist when specs are untrusted.
+ */
 export const fetchImage: ImageLoader = async (src) => {
   const response = await fetch(src, { signal: AbortSignal.timeout(IMAGE_TIMEOUT_MS) })
+  if (response.url && !/^https:\/\//i.test(response.url)) throw new Error('Redirected away from https')
   if (!response.ok) throw new Error(`HTTP ${response.status}`)
   const type = response.headers.get('content-type')?.split(';')[0]?.trim().toLowerCase() ?? ''
   if (!/^image\/(png|jpe?g|gif|svg\+xml)$/.test(type)) throw new Error(`Unsupported content type "${type}"`)
-  const bytes = new Uint8Array(await response.arrayBuffer())
-  if (bytes.length > MAX_IMAGE_BYTES) throw new Error('Image is larger than 10 MB')
-  return `data:${type};base64,${toBase64(bytes)}`
+  return `data:${type};base64,${toBase64(await readCapped(response))}`
 }
 
 export interface ImageWarning {
@@ -64,8 +95,12 @@ export async function preloadImages(
   }
 
   const loaded = new Map<string, string>()
+  const wanted = [...sources]
+  for (const src of wanted.slice(MAX_IMAGES)) {
+    warn({ src, blocked: true, message: `A spec may use at most ${MAX_IMAGES} different images.` })
+  }
   await Promise.all(
-    [...sources].map(async (src) => {
+    wanted.slice(0, MAX_IMAGES).map(async (src) => {
       if (classifySource(src) === 'blocked') {
         warn({ src, blocked: true, message: 'Only https URLs and data: images are allowed.' })
         return
@@ -73,6 +108,7 @@ export async function preloadImages(
       try {
         const data = classifySource(src) === 'data' ? src : await load(src)
         if (classifySource(data) !== 'data') throw new Error('The loader must return a data: image')
+        if (data.length > MAX_IMAGE_BYTES * 1.4) throw new Error('Image is larger than 10 MB')
         loaded.set(src, data)
       } catch (error) {
         warn({ src, blocked: false, message: error instanceof Error ? error.message : 'Could not load the image.' })

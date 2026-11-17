@@ -1,5 +1,5 @@
 import type { UIElement } from '@json-render/core'
-import { defaultBaseTheme, resolveBaseTheme, type BaseThemeInput } from 'json-render-office'
+import { classifySource, resolveBaseTheme, type BaseThemeInput } from 'json-render-office'
 import { defineComponent, h, type CSSProperties, type Component, type PropType, type VNode } from 'vue'
 
 import { CHART_HEIGHT, CHART_WIDTH, layoutChart, type Shape } from './chart'
@@ -21,11 +21,19 @@ export function themeStyle(input?: BaseThemeInput): CSSProperties {
     '--jr-font-heading': `${theme.fonts.heading}, system-ui, sans-serif`,
     '--jr-font-body': `${theme.fonts.body}, system-ui, sans-serif`,
   }
-  theme.palette.forEach((color, index) => (style[`--jr-series-${index}`] = color))
+  for (let index = 0; index < SERIES_SLOTS; index++) {
+    style[`--jr-series-${index}`] = theme.palette[index % theme.palette.length] ?? ''
+  }
   return style
 }
 
-const SERIES = (index: number): string => `var(--jr-series-${index % defaultBaseTheme.palette.length})`
+const SERIES = (index: number): string => `var(--jr-series-${index % SERIES_SLOTS})`
+
+/** Series colours are defined for this many slots, cycling a shorter palette. */
+const SERIES_SLOTS = 12
+
+/** The preview loads only what the Office renderers load: https URLs and data: images. */
+const webImageSrc = (src: string): string | undefined => (classifySource(src) === 'blocked' ? undefined : src)
 
 const elementProp = { element: { type: Object as PropType<UIElement>, required: true as const } }
 
@@ -137,7 +145,7 @@ export const webRegistry: Record<string, Component> = {
       ),
     ])
   }),
-  Image: define('Image', (p) => h('img', { src: p.src, alt: p.alt, loading: 'lazy' })),
+  Image: define('Image', (p) => h('img', { src: webImageSrc(p.src), alt: p.alt, loading: 'lazy' })),
 }
 
 /** Base styles for `webRegistry`. Optional: every class is prefixed `jr-`. */
