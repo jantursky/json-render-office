@@ -19,7 +19,7 @@
     "test:coverage": "bun run --filter 'json-render-*' test:coverage",
     "test:oracle": "bun run --filter json-render-report test:oracle",
     "test:pack": "node scripts/pack-test.js",
-    "test:e2e": "bun run build && bun run --filter example test:e2e",
+    "test:e2e": "bun run build && bun run build:apps && bun run --filter example test:e2e",
     "typecheck": "bun run --filter '*' typecheck",
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix",

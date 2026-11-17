@@ -24,6 +24,8 @@ jobs:
         with:
           node-version: 22
       - run: bun install --frozen-lockfile
+      # Type-aware lint resolves the workspace packages through their built types.
+      - run: bun run build
       - name: Format
         run: bun run format:check
       - name: Lint
@@ -120,7 +122,7 @@ jobs:
         run: bun run build:docs
       - name: End-to-end tests of the example app
         run: |
-          bunx playwright install --with-deps chromium
+          bunx playwright install --with-deps
           bun run test:e2e
       - name: Upload Playwright traces
         if: failure()
