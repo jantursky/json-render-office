@@ -31,7 +31,8 @@ const serve = () =>
     const server = createServer((request, response) => {
       const path = decodeURIComponent(new URL(request.url ?? '/', 'http://localhost').pathname)
       let file = join(dist, path)
-      if (!file.startsWith(dist) || !statSync(file, { throwIfNoEntry: false })?.isFile()) file = join(dist, 'index.html')
+      if (!file.startsWith(dist) || !statSync(file, { throwIfNoEntry: false })?.isFile())
+        file = join(dist, 'index.html')
       response.writeHead(200, { 'content-type': types[extname(file)] ?? 'application/octet-stream' })
       response.end(readFileSync(file))
     })
@@ -55,7 +56,7 @@ try {
     await page.goto(url)
     await page.getByRole('button', { name: 'Quarterly review' }).click()
     await page.getByText('The report is ready').waitFor()
-    await page.evaluate(() => document.fonts.ready)
+    await page.evaluate(() => globalThis.document.fonts.ready)
 
     await page.screenshot({ path: join(out, `generator-${theme}.png`) })
     shrink(join(out, `generator-${theme}.png`))

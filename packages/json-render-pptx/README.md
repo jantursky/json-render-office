@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://raw.githubusercontent.com/jantursky/json-render-office/main/.github/assets/banner.svg" alt="JSON Render Office: editable office files from json-render specs" width="420">
+</p>
+
 # json-render-pptx
 
 Render [json-render](https://github.com/vercel-labs/json-render) specs to PowerPoint (.pptx) files. Text, tables and charts are real Office objects, so the result stays editable. Works in Node and the browser.
