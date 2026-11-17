@@ -81,6 +81,66 @@ export const standardComponentDefinitions = {
     description: 'A bulleted or numbered list. At most 6 items of about 12 words each fit well.',
     example: { items: ['Enterprise revenue up 31%', 'Churn down to 2.1%', 'Two new regions launched'] },
   },
+
+  Table: {
+    props: z.object({
+      columns: z.array(z.string().max(40)).min(1).max(6).describe('Header labels, one per column.'),
+      rows: z
+        .array(z.array(z.string().max(60)).max(6))
+        .min(1)
+        .max(10)
+        .describe('Each row has one string per column.'),
+      fontSize: z.number().min(9).max(24).nullable().describe('Points. Null uses a size that fits.'),
+      striped: z.boolean().nullable().describe('Shade every second row.'),
+    }),
+    slots: [],
+    description: 'A native table with a header row. At most 6 columns and 10 rows fit on a slide.',
+    example: {
+      columns: ['Region', 'Revenue'],
+      rows: [
+        ['EMEA', '$4.2M'],
+        ['Americas', '$6.8M'],
+      ],
+    },
+  },
+
+  Chart: {
+    props: z.object({
+      type: z.enum(['bar', 'line', 'pie', 'doughnut', 'area']),
+      title: z.string().max(80).nullable(),
+      labels: z.array(z.string().max(30)).min(1).max(12).describe('Category labels (x axis, or one per slice).'),
+      series: z
+        .array(
+          z.object({
+            name: z.string().max(40),
+            values: z.array(z.number()).min(1).max(12).describe('One number per label.'),
+          }),
+        )
+        .min(1)
+        .max(4)
+        .describe('Pie and doughnut charts use only the first series.'),
+      legend: z.boolean().nullable(),
+    }),
+    slots: [],
+    description:
+      "A native, editable chart (the data opens in PowerPoint's chart editor). Every series needs one value per label.",
+    example: {
+      type: 'bar',
+      title: 'Revenue by quarter',
+      labels: ['Q1', 'Q2', 'Q3', 'Q4'],
+      series: [{ name: 'Revenue', values: [4.1, 4.8, 5.6, 6.9] }],
+    },
+  },
+
+  Image: {
+    props: z.object({
+      src: z.string().describe('An https URL or a data: URI. Local paths are not allowed.'),
+      alt: z.string().max(200).describe('What the image shows, for screen readers.'),
+    }),
+    slots: [],
+    description: 'A picture that fills the space left under the Title. Always give alt text.',
+    example: { src: 'https://picsum.photos/800/450?random=1', alt: 'A mountain lake at sunrise' },
+  },
 }
 
 export type StandardComponentDefinitions = typeof standardComponentDefinitions

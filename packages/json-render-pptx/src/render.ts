@@ -10,14 +10,16 @@ import {
 import { defineComponent, h, provide, type Component, type VNode } from 'vue'
 import { Presentation, renderToBlob as pptxRenderToBlob, renderToBuffer as pptxRenderToBuffer } from 'vue-pptx-document'
 
-import { THEME } from './components/context'
+import { IMAGES, THEME } from './components/context'
 import { standardComponents } from './components/standard'
+import { preloadImages, fetchImage, type ImageLoader } from './images'
 import { resolveTheme, type ThemeInput } from './theme'
 
 export type ComponentRegistry = Record<string, Component>
 
 export interface RenderWarning {
-  code: 'missing-root' | 'missing-element' | 'unknown-type' | 'bad-props' | 'bad-repeat'
+  code:
+    'missing-root' | 'missing-element' | 'unknown-type' | 'bad-props' | 'bad-repeat' | 'blocked-image' | 'image-failed'
   message: string
   /** The element key, when the warning is about one element. */
   element?: string
@@ -31,6 +33,8 @@ export interface RenderOptions {
   /** Merged over `spec.state`. */
   state?: Record<string, unknown>
   theme?: ThemeInput
+  /** Loads https images. Default: fetch with a 10 s timeout, a type check and a 10 MB cap. */
+  loadImage?: ImageLoader
   /** Receives every skipped element and unusable prop. Without it, warnings go to `console.warn`. */
   onWarn?: (warning: RenderWarning) => void
 }
@@ -105,7 +109,11 @@ function walkRepeat(key: string, ctx: Walk, scope: Scope): VNode[] | undefined {
 }
 
 /** Builds the Vue component that stands for a spec. Missing roots and elements render nothing. */
-export function createDocument(spec: Spec, options: RenderOptions = {}): Component {
+export function createDocument(
+  spec: Spec,
+  options: RenderOptions = {},
+  images: ReadonlyMap<string, string> = new Map(),
+): Component {
   const warn =
     options.onWarn ??
     ((w: RenderWarning) => {
@@ -123,6 +131,7 @@ export function createDocument(spec: Spec, options: RenderOptions = {}): Compone
     name: 'JsonRenderDocument',
     setup() {
       provide(THEME, theme)
+      provide(IMAGES, images)
       return () => {
         const root = spec.root && spec.root in spec.elements
         if (!root) warn({ code: 'missing-root', message: 'The spec has no root element yet.' })
@@ -134,14 +143,34 @@ export function createDocument(spec: Spec, options: RenderOptions = {}): Compone
   })
 }
 
+async function prepare(spec: Spec, options: RenderOptions = {}): Promise<Component> {
+  const warn =
+    options.onWarn ??
+    ((w: RenderWarning) => {
+      console.warn(`[json-render-pptx] ${w.message}`)
+    })
+  const images = await preloadImages(
+    spec,
+    { ...spec.state, ...options.state },
+    options.loadImage ?? fetchImage,
+    (w) => {
+      warn({
+        code: w.blocked ? 'blocked-image' : 'image-failed',
+        message: `Image "${w.src.slice(0, 80)}": ${w.message}`,
+      })
+    },
+  )
+  return createDocument(spec, options, images)
+}
+
 /** Renders a spec to the bytes of a .pptx file. Works in Node, workers and the browser. */
-export function renderToBuffer(spec: Spec, options?: RenderOptions): Promise<Uint8Array> {
-  return pptxRenderToBuffer(createDocument(spec, options))
+export async function renderToBuffer(spec: Spec, options?: RenderOptions): Promise<Uint8Array> {
+  return pptxRenderToBuffer(await prepare(spec, options))
 }
 
 /** Renders a spec to a Blob with the PowerPoint MIME type. */
-export function renderToBlob(spec: Spec, options?: RenderOptions): Promise<Blob> {
-  return pptxRenderToBlob(createDocument(spec, options))
+export async function renderToBlob(spec: Spec, options?: RenderOptions): Promise<Blob> {
+  return pptxRenderToBlob(await prepare(spec, options))
 }
 
 /** Renders a spec to a file. Node only: `node:fs` is loaded on first use. */

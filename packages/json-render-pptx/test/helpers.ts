@@ -7,6 +7,8 @@ export interface Rendered {
   files: Record<string, Uint8Array>
   /** The text of one part of the package, such as `ppt/slides/slide1.xml`. */
   xml: (path: string) => string
+  /** The text of the only part whose path matches. */
+  part: (pattern: RegExp) => string
   warnings: RenderWarning[]
 }
 
@@ -17,6 +19,11 @@ export async function render(spec: Spec, options: RenderOptions = {}): Promise<R
   return {
     files,
     warnings,
+    part: (pattern) => {
+      const paths = Object.keys(files).filter((f) => pattern.test(f))
+      if (paths.length !== 1) throw new Error(`Expected one part matching ${pattern}, found: ${paths.join(', ')}`)
+      return strFromU8(files[paths[0]!]!)
+    },
     xml: (path) => {
       const file = files[path]
       if (!file) throw new Error(`No ${path} in the package. Has: ${Object.keys(files).join(', ')}`)
