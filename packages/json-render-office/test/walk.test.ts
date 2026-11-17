@@ -1,5 +1,5 @@
 import type { Spec } from '@json-render/core'
-import { defineComponent, h, type VNode } from 'vue'
+import { defineComponent, type VNode } from 'vue'
 import { describe, expect, it, vi } from 'vitest'
 
 import { consoleWarn, walkSpec, type RenderWarning } from '../src'
