@@ -46,22 +46,15 @@ const defineStandard = <K extends keyof StandardProps>(
     },
   })
 
-/** Elements of the given standard types; the rest cannot sit at this level of a Word file. */
+/** Only the elements of the given types: a Document holds Sections and nothing else. */
 const only = (children: VNode[], allowed: ReadonlySet<string>): VNode[] =>
-  children.filter((child) => allowed.has((child.props as { element?: UIElement } | null)?.element?.type ?? ''))
+  children.filter((child) => allowed.has(typeOf(child)))
 
-const BLOCKS = new Set([
-  'Header',
-  'Footer',
-  'Title',
-  'Heading',
-  'Paragraph',
-  'List',
-  'Table',
-  'Image',
-  'PageBreak',
-  'TableOfContents',
-])
+const typeOf = (child: VNode): string => (child.props as { element?: UIElement } | null)?.element?.type ?? ''
+
+/** A Section holds blocks. A Document or Section inside it cannot sit there in a Word file. */
+const withoutStructure = (children: VNode[]): VNode[] =>
+  children.filter((child) => typeOf(child) !== 'Document' && typeOf(child) !== 'Section')
 
 const Document = defineStandard('Document', (p, children, theme) =>
   h(
@@ -98,7 +91,7 @@ const Section = defineStandard('Section', (p, children) =>
       orientation: optional(p.orientation),
       margin: (p.margin ?? 1) * POINTS_PER_INCH,
     },
-    () => only(children, BLOCKS),
+    () => withoutStructure(children),
   ),
 )
 

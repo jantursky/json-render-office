@@ -11,3 +11,5 @@ export {
   type SourceKind,
 } from './images'
 export { validateProps, type PropDefinitions, type PropsIssue } from './validate'
+export { defaultBaseTheme, resolveBaseTheme, type BaseTheme, type BaseThemeInput } from './theme'
+export { COMMON_RULES, defineOfficeSchema } from './schema'
