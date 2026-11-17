@@ -1,0 +1,13 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "noEmit": true,
+    "paths": {
+      "json-render-office": ["../json-render-office/src/index.ts"],
+      "json-render-pptx": ["../json-render-pptx/src/index.ts"],
+      "json-render-docx": ["../json-render-docx/src/index.ts"]
+    }
+  },
+  "include": ["src/**/*.ts", "test/**/*.ts", "vite.config.ts", "vitest.config.ts"]
+}

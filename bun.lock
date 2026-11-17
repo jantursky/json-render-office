@@ -91,6 +91,39 @@
         "zod": "^4.0.0",
       },
     },
+    "packages/json-render-report": {
+      "name": "json-render-report",
+      "version": "1.0.0",
+      "dependencies": {
+        "json-render-docx": "^1.0.0",
+        "json-render-office": "^1.0.0",
+        "json-render-pptx": "^1.0.0",
+      },
+      "devDependencies": {
+        "@arethetypeswrong/cli": "^0.18.5",
+        "@json-render/core": "0.23.1",
+        "@json-render/vue": "0.23.1",
+        "@types/node": "^22",
+        "@vitest/coverage-v8": "5.1.0",
+        "fflate": "^0.8",
+        "publint": "^0.3.25",
+        "typescript": "~5.9.3",
+        "vite": "^8",
+        "vite-plugin-dts": "^5",
+        "vitest": "5.1.0",
+        "vue": "^3.5.0",
+        "zod": "^4.6.7",
+      },
+      "peerDependencies": {
+        "@json-render/core": "^0.23.1",
+        "@json-render/vue": "^0.23.1",
+        "vue": "^3.5.0",
+        "zod": "^4.0.0",
+      },
+      "optionalPeers": [
+        "@json-render/vue",
+      ],
+    },
   },
   "packages": {
     "@andrewbranch/untar.js": ["@andrewbranch/untar.js@1.0.4", "", {}, "sha512-pVXSwPsLuw8IGLo2Di0EaOfsk+ntVvpkk942J/sHYIkwvtKUakEcPh7HBgZ6tuimgzKSEHgCvO4XgQ05DEbwDw=="],
@@ -162,6 +195,8 @@
     "@jridgewell/trace-mapping": ["@jridgewell/trace-mapping@0.3.31", "", { "dependencies": { "@jridgewell/resolve-uri": "^3.1.0", "@jridgewell/sourcemap-codec": "^1.4.14" } }, "sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw=="],
 
     "@json-render/core": ["@json-render/core@0.23.1", "", { "dependencies": { "zod": "^4.3.6" } }, "sha512-FVTxhxucSNdcZe9CWQ/767N/vtj4f5YLu5BEY8P8eXYs80tvbKh/26avadTEDaAMfCnnyGRsuA/POzyvA2O85A=="],
+
+    "@json-render/vue": ["@json-render/vue@0.23.1", "", { "dependencies": { "@json-render/core": "0.23.1" }, "peerDependencies": { "vue": "^3.5.0", "zod": "^4.0.0" } }, "sha512-nww5n40i4bbbDo0mXHGMILkp3THV77LNiBB8mwZrq9SDtH4I/OKUyWDAXtXtgpw5AYDtVTSVsp1v3X/Dhc9XSg=="],
 
     "@keyv/bigmap": ["@keyv/bigmap@1.3.1", "", { "dependencies": { "hashery": "^1.4.0", "hookified": "^1.15.0" }, "peerDependencies": { "keyv": "^5.6.0" } }, "sha512-WbzE9sdmQtKy8vrNPa9BRnwZh5UF4s1KTmSK0KUVLo3eff5BlQNNWDnFOouNpKfPKDnms9xynJjsMYjMaT/aFQ=="],
 
@@ -462,6 +497,8 @@
     "json-render-office": ["json-render-office@workspace:packages/json-render-office"],
 
     "json-render-pptx": ["json-render-pptx@workspace:packages/json-render-pptx"],
+
+    "json-render-report": ["json-render-report@workspace:packages/json-render-report"],
 
     "json-schema-traverse": ["json-schema-traverse@0.4.1", "", {}, "sha512-xbbCH5dCYU5T8LcEhhuh7HJ88HXuW3qsI3Y0zOZFKfZEHcpWiHU/Jxzk629Brsab/mMiHQti9wMP+845RPe3Vg=="],
 

@@ -1,0 +1,5 @@
+export * from './server'
+export { validateProps, type PropsIssue } from './validate'
+export { renderToDocx, renderToDocxBlob, renderToPptx, renderToPptxBlob } from './render'
+export { docxRegistry, chartAsTable } from './docx'
+export { pptxRegistry } from './pptx'
