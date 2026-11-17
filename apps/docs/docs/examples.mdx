@@ -1,0 +1,26 @@
+---
+title: Examples
+description: Live examples from the demo app.
+sidebar:
+  order: 11
+---
+
+The previews on this page run the example files of the demo app, so the docs and the demo cannot drift apart. The same files are in `apps/example/src/examples`. Open the **Code** tab of a preview to read it.
+
+## Preview
+
+The web renderer of `json-render-report` draws a fixed report spec. The same spec is what the other two examples use.
+
+<Component path="PreviewExample" />
+
+## Download
+
+The same spec as a PowerPoint deck or a Word document, written in the browser with `renderToPptxBlob` and `renderToDocxBlob`.
+
+<Component path="DownloadExample" />
+
+## Streaming
+
+The spec arrives as JSONL patches, two lines at a time, and the page fills in as `createSpecStreamCompiler` applies them. See [Streaming](/streaming).
+
+<Component path="StreamingExample" />

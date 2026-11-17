@@ -1,0 +1,14 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "typeRoots": ["../apps/example/node_modules/@types"],
+    "noEmit": true,
+    "paths": {
+      "ai": ["../apps/example/node_modules/ai"],
+      "@json-render/core": ["../apps/example/node_modules/@json-render/core"],
+      "json-render-report/server": ["../packages/json-render-report/dist/server.d.ts"]
+    }
+  },
+  "include": ["*.ts"]
+}

@@ -7,11 +7,12 @@
     "node": ">=22.19"
   },
   "scripts": {
-    "dev": "bun run sync:changelog && blume dev",
-    "build": "bun run sync:changelog && blume build",
+    "dev": "bun run generate && blume dev",
+    "build": "bun run generate && blume build",
     "preview": "blume preview",
     "doctor": "blume doctor",
     "typecheck": "tsc --noEmit -p tsconfig.json",
+    "generate": "bun run sync:changelog && node scripts/components.js",
     "sync:changelog": "mkdir -p docs/_generated && sed 1,2d ../../packages/json-render-report/CHANGELOG.md > docs/_generated/changelog.md"
   },
   "dependencies": {
@@ -20,6 +21,7 @@
     "json-render-docx": "workspace:*",
     "json-render-pptx": "workspace:*",
     "json-render-report": "workspace:*",
-    "vue": "^3.5.0"
+    "vue": "^3.5.0",
+    "zod": "^4.6.7"
   }
 }

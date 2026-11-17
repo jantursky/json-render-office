@@ -1,0 +1,25 @@
+---
+title: Components
+description: Every standard component of the slide, document and report catalogs, with its props.
+---
+
+Each package has a catalog of standard components. The pages below list them with their props, a spec example and a screenshot of how LibreOffice {{libreoffice}} draws them. The props tables are generated from the Zod definitions in the packages, so they are what `validateProps` enforces.
+
+<CardGroup cols={3}>
+  <Card title="Slides" href="/components/pptx" icon="presentation">
+    `json-render-pptx`: Deck, Slide, Columns, Title, Chart and more.
+  </Card>
+  <Card title="Documents" href="/components/docx" icon="file-text">
+    `json-render-docx`: Document, Section, Heading, List, Table and more.
+  </Card>
+  <Card title="Report" href="/components/report" icon="layers">
+    `json-render-report`: one catalog for the web, slides and Word.
+  </Card>
+</CardGroup>
+
+## Reading the tables
+
+- **Nullable** props must still be present in the element. Write `null` to use the default, because the catalogs are strict.
+- Limits such as "up to 90 characters" or "1 to 7 items" are enforced by `validateProps`, not by the renderer. A spec over a limit still renders.
+- Every element has `type`, `props` and `children`. Components that take no children use `"children": []`.
+- The examples show an element on its own. Put the keys of its children in `children`, and add each child to `elements`.

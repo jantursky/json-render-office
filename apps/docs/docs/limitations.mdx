@@ -1,0 +1,30 @@
+---
+title: Limitations
+description: What is verified, what is not, and what is missing.
+sidebar:
+  order: 10
+---
+
+## What "verified" means here
+
+The only application these packages have been checked against is LibreOffice. The gallery script renders a spec for every standard component, converts the file to PDF with LibreOffice {{libreoffice}} and looks at the result. Those screenshots are on the [component pages](/components).
+
+<include>./_generated/verified.md</include>
+
+Everything else is unverified. That includes Microsoft Word, Microsoft PowerPoint, Keynote, Google Docs and Google Slides, and any other viewer. The files follow the Office Open XML format and the writers have their own tests, but nobody has opened them in those applications and compared the result. Treat an exact match as unconfirmed, and check a file in your target application before you depend on it.
+
+For the compatibility table per feature, see the [README](https://github.com/jantursky/json-render-office#readme) in the repository.
+
+## Missing or partial
+
+- **No charts in Word.** `json-render-docx` has no `Chart` component. In a report, a chart becomes a table of its numbers in the document.
+- **No PDF output.** See [One spec, three outputs](/one-spec#pdf-is-not-included).
+- **Fonts are names only.** Nothing is embedded. The default is Calibri, and LibreOffice draws it with a substitute where it is not installed.
+- **Fixed layouts.** Slides use `title`, `title-content`, `section` or `blank`, with `Columns` for two or three columns. You cannot place an element at a position.
+- **Fields in Word.** The `TableOfContents` and the "Page X of Y" in a `Footer` are Word fields. Word fills in page numbers when it opens the file. LibreOffice drew the contents entries with dotted leaders and no page numbers in the check above.
+- **Limits live in `validateProps`.** The renderer does not enforce lengths and counts. A spec over a limit still renders, and how it fits on the page is not checked.
+- **Image sources are restricted** to `https:` and `data:` images. See [Images and security](/images-and-security).
+
+## Not affiliated
+
+Community project. Not affiliated with or endorsed by Vercel. "json-render" is the name of the Vercel Labs project these packages render for.

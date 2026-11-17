@@ -1,7 +1,7 @@
 import type { Spec } from '@json-render/core'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { classifySource, fetchImage, MAX_IMAGE_BYTES, preloadImages, type ImageWarning } from '../src'
+import { classifySource, fetchImage, MAX_IMAGE_BYTES, preloadImages, sniffImageSize, type ImageWarning } from '../src'
 
 const PNG =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
@@ -105,11 +105,37 @@ describe('preloadImages', () => {
 describe('preloadImages on a spec that has not started streaming', () => {
   it('loads nothing', async () => {
     const loaded = await preloadImages(
-      {} as Spec,
+      {},
       {},
       () => Promise.reject(new Error('no')),
       () => {},
     )
     expect(loaded.size).toBe(0)
+  })
+})
+
+describe('sniffImageSize', () => {
+  const b64 = (bytes: number[]): string => `data:image/x;base64,${btoa(String.fromCharCode(...bytes))}`
+
+  it('reads a PNG', () => {
+    expect(sniffImageSize(PNG)).toEqual({ width: 1, height: 1 })
+  })
+
+  it('reads a GIF', () => {
+    const gif = [0x47, 0x49, 0x46, 0x38, 0x39, 0x61, 0x40, 0x01, 0xf0, 0x00]
+    expect(sniffImageSize(b64(gif))).toEqual({ width: 320, height: 240 })
+  })
+
+  it('reads a JPEG past its other segments', () => {
+    const jpeg = [
+      0xff, 0xd8, 0xff, 0xe0, 0x00, 0x04, 0x00, 0x00, 0xff, 0xc0, 0x00, 0x0b, 0x08, 0x00, 0xc8, 0x01, 0x2c, 0x03,
+    ]
+    expect(sniffImageSize(b64(jpeg))).toEqual({ width: 300, height: 200 })
+  })
+
+  it('gives up on SVG, broken data and a JPEG without a frame', () => {
+    expect(sniffImageSize(b64([0x3c, 0x73, 0x76, 0x67]))).toBeUndefined()
+    expect(sniffImageSize('data:image/png;base64,@@@')).toBeUndefined()
+    expect(sniffImageSize(b64([0xff, 0xd8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]))).toBeUndefined()
   })
 })

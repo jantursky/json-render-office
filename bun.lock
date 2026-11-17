@@ -4,6 +4,11 @@
   "workspaces": {
     "": {
       "name": "json-render-office-monorepo",
+      "dependencies": {
+        "@json-render/core": "0.23.1",
+        "ai": "^7",
+        "json-render-report": "workspace:*",
+      },
       "devDependencies": {
         "@eslint/js": "^10",
         "@size-limit/esbuild": "^14",

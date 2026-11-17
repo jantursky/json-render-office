@@ -1,0 +1,203 @@
+{
+  "libreOffice": "26.8.3.1",
+  "shots": {
+    "pptx-Deck": {
+      "file": "pptx-Deck.png",
+      "bytes": 4562,
+      "width": 800,
+      "height": 451
+    },
+    "pptx-Slide": {
+      "file": "pptx-Slide.png",
+      "bytes": 21804,
+      "width": 1636,
+      "height": 938
+    },
+    "pptx-Columns": {
+      "file": "pptx-Columns.png",
+      "bytes": 7209,
+      "width": 800,
+      "height": 451
+    },
+    "pptx-Column": {
+      "file": "pptx-Column.png",
+      "bytes": 7478,
+      "width": 800,
+      "height": 451
+    },
+    "pptx-Title": {
+      "file": "pptx-Title.png",
+      "bytes": 5787,
+      "width": 800,
+      "height": 451
+    },
+    "pptx-Subtitle": {
+      "file": "pptx-Subtitle.png",
+      "bytes": 4562,
+      "width": 800,
+      "height": 451
+    },
+    "pptx-Text": {
+      "file": "pptx-Text.png",
+      "bytes": 6602,
+      "width": 800,
+      "height": 451
+    },
+    "pptx-BulletList": {
+      "file": "pptx-BulletList.png",
+      "bytes": 5378,
+      "width": 800,
+      "height": 451
+    },
+    "pptx-Table": {
+      "file": "pptx-Table.png",
+      "bytes": 8307,
+      "width": 800,
+      "height": 451
+    },
+    "pptx-Chart": {
+      "file": "pptx-Chart.png",
+      "bytes": 22030,
+      "width": 1636,
+      "height": 938
+    },
+    "pptx-Image": {
+      "file": "pptx-Image.png",
+      "bytes": 14435,
+      "width": 800,
+      "height": 451
+    },
+    "docx-Document": {
+      "file": "docx-Document.png",
+      "bytes": 4156,
+      "width": 522,
+      "height": 142
+    },
+    "docx-Section": {
+      "file": "docx-Section.png",
+      "bytes": 13653,
+      "width": 1578,
+      "height": 954
+    },
+    "docx-Header": {
+      "file": "docx-Header.png",
+      "bytes": 4457,
+      "width": 662,
+      "height": 281
+    },
+    "docx-Footer": {
+      "file": "docx-Footer.png",
+      "bytes": 857,
+      "width": 662,
+      "height": 281
+    },
+    "docx-Title": {
+      "file": "docx-Title.png",
+      "bytes": 3660,
+      "width": 522,
+      "height": 114
+    },
+    "docx-Heading": {
+      "file": "docx-Heading.png",
+      "bytes": 3582,
+      "width": 522,
+      "height": 166
+    },
+    "docx-Paragraph": {
+      "file": "docx-Paragraph.png",
+      "bytes": 4248,
+      "width": 522,
+      "height": 120
+    },
+    "docx-List": {
+      "file": "docx-List.png",
+      "bytes": 4261,
+      "width": 259,
+      "height": 185
+    },
+    "docx-Table": {
+      "file": "docx-Table.png",
+      "bytes": 2699,
+      "width": 533,
+      "height": 165
+    },
+    "docx-Image": {
+      "file": "docx-Image.png",
+      "bytes": 7333,
+      "width": 353,
+      "height": 213
+    },
+    "docx-PageBreak": {
+      "file": "docx-PageBreak.png",
+      "bytes": 6970,
+      "width": 1360,
+      "height": 954
+    },
+    "docx-TableOfContents": {
+      "file": "docx-TableOfContents.png",
+      "bytes": 6134,
+      "width": 534,
+      "height": 297
+    },
+    "report-Report": {
+      "file": "report-Report.png",
+      "bytes": 4335,
+      "width": 800,
+      "height": 451
+    },
+    "report-Chapter": {
+      "file": "report-Chapter.png",
+      "bytes": 7003,
+      "width": 800,
+      "height": 451
+    },
+    "report-Paragraph": {
+      "file": "report-Paragraph.png",
+      "bytes": 6016,
+      "width": 800,
+      "height": 451
+    },
+    "report-BulletList": {
+      "file": "report-BulletList.png",
+      "bytes": 4931,
+      "width": 800,
+      "height": 451
+    },
+    "report-Table": {
+      "file": "report-Table.png",
+      "bytes": 8398,
+      "width": 800,
+      "height": 451
+    },
+    "report-Chart": {
+      "file": "report-Chart.png",
+      "bytes": 5975,
+      "width": 800,
+      "height": 451
+    },
+    "report-Image": {
+      "file": "report-Image.png",
+      "bytes": 13115,
+      "width": 800,
+      "height": 451
+    },
+    "one-spec-pptx": {
+      "file": "one-spec-pptx.png",
+      "bytes": 36878,
+      "width": 1636,
+      "height": 938
+    },
+    "one-spec-docx": {
+      "file": "one-spec-docx.png",
+      "bytes": 24592,
+      "width": 1052,
+      "height": 610
+    },
+    "one-spec-web": {
+      "file": "one-spec-web.png",
+      "bytes": 26077,
+      "width": 760,
+      "height": 1540
+    }
+  }
+}

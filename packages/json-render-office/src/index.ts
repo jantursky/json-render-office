@@ -1,4 +1,4 @@
-export { walkSpec, type ComponentRegistry, type WalkOptions } from './walk'
+export { walkSpec, type ComponentRegistry, type StreamedSpec, type WalkOptions } from './walk'
 export { consoleWarn, type RenderWarning, type WarnHandler, type WarningCode } from './warnings'
 export {
   classifySource,
@@ -6,6 +6,8 @@ export {
   IMAGE_TIMEOUT_MS,
   MAX_IMAGE_BYTES,
   preloadImages,
+  sniffImageSize,
+  type ImageSize,
   type ImageLoader,
   type ImageWarning,
   type SourceKind,

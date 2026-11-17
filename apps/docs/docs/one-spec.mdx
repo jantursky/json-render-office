@@ -1,0 +1,87 @@
+---
+title: One spec, three outputs
+description: Render one report spec to a web page, an editable deck and a Word document.
+sidebar:
+  order: 7
+---
+
+`json-render-report` has one catalog, built for content that is read in more than one place: `Report`, `Chapter`, `Paragraph`, `BulletList`, `Table`, `Chart` and `Image`. The same spec becomes a web page, a PowerPoint deck and a Word document.
+
+A `Chapter` is one idea. In the deck it is a slide, in the document a heading with its content, and on the web a section. The `Report` supplies the cover slide, the document title and the page heading.
+
+## The spec
+
+```json
+{
+  "root": "report",
+  "elements": {
+    "report": {
+      "type": "Report",
+      "props": { "title": "Quarterly review", "subtitle": "Q3 2026", "author": "Finance team" },
+      "children": ["revenue"]
+    },
+    "revenue": {
+      "type": "Chapter",
+      "props": { "title": "Revenue grew 24%", "notes": null },
+      "children": ["text", "points"]
+    },
+    "text": {
+      "type": "Paragraph",
+      "props": { "text": "Growth came mostly from the enterprise tier." },
+      "children": []
+    },
+    "points": {
+      "type": "BulletList",
+      "props": { "items": ["Enterprise revenue up 31%", "Churn down to 2.1%"], "ordered": null },
+      "children": []
+    }
+  }
+}
+```
+
+## Web
+
+The web renderer is a registry for `@json-render/vue`, plain HTML and SVG themed through CSS custom properties (see [Themes](/themes#web)):
+
+```ts
+import { JSONUIProvider, Renderer } from '@json-render/vue'
+import { webRegistry } from 'json-render-report/web'
+```
+
+<Frame caption="The report as a web page, drawn in Chromium.">
+  <img src="/gallery/one-spec-web.png" alt="The report as a web page" width="380" />
+</Frame>
+
+## PowerPoint
+
+```ts
+import { renderToPptx } from 'json-render-report'
+
+const bytes = await renderToPptx(spec) // Uint8Array; renderToPptxBlob gives a Blob
+```
+
+A cover slide comes first, then one slide per `Chapter`. Chapter `notes` become speaker notes, and a `Chart` is a native chart you can edit in PowerPoint.
+
+<Frame caption="The deck in LibreOffice: the cover and one slide per chapter.">
+  <img src="/gallery/one-spec-pptx.png" alt="The report as four slides" />
+</Frame>
+
+## Word
+
+```ts
+import { renderToDocx } from 'json-render-report'
+
+const bytes = await renderToDocx(spec) // renderToDocxBlob gives a Blob
+```
+
+The document starts with the title and a line with the subtitle and the author. Each `Chapter` is a Heading 1 followed by its content. A `Chart` is written as a table of its numbers, because charts in Word are not supported yet.
+
+<Frame caption="The document in LibreOffice. The chart is a table.">
+  <img src="/gallery/one-spec-docx.png" alt="The report as a Word document" />
+</Frame>
+
+## PDF is not included
+
+These packages do not write PDF, and nothing here has been tested with a PDF renderer. If you need PDF today, convert the `.docx` with an office suite.
+
+A native PDF output could be added with [`@json-render/react-pdf`](https://github.com/vercel-labs/json-render), the first-party renderer. Its `renderToBuffer(spec, { registry })` accepts a custom registry, and its standard components include `Document`, `Page`, `Heading`, `Text`, `List`, `Table` and `Image`. The mapping would follow the pattern of `pptxRegistry` and `docxRegistry` in this package: a `Report` becomes a `Document` with `Page`s, a `Chapter` a `Heading` followed by its blocks, and a `Chart` an `Image` of the SVG that the web renderer already draws. `@json-render/react-pdf` is built on React, so it would have to live in a package of its own.

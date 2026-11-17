@@ -1,0 +1,99 @@
+---
+title: Getting started
+description: Install a renderer, write a spec and save the file from Node or download it in the browser.
+sidebar:
+  order: 2
+---
+
+## Install
+
+Pick the renderer you need:
+
+```package-install
+json-render-pptx @json-render/core vue zod
+```
+
+`@json-render/core`, `vue` (`^3.5`) and `zod` (`^4`) are peer dependencies. Use `json-render-docx` for Word and `json-render-report` for the one-spec report. The packages are ESM only and run on Node 20.19 or later, in workers and in the browser.
+
+## A spec
+
+A spec lists its elements by key. Every element has `type`, `props` and `children`. Props that are optional in the catalog are `null` when unused, because the catalogs are strict.
+
+```ts review.ts
+import { renderToFile } from 'json-render-pptx'
+
+const spec = {
+  root: 'deck',
+  elements: {
+    deck: {
+      type: 'Deck',
+      props: { title: 'Quarterly review', author: 'Finance team', subject: null },
+      children: ['cover', 'wins'],
+    },
+    cover: {
+      type: 'Slide',
+      props: { layout: 'title', background: null, notes: null, slideNumber: null },
+      children: ['coverTitle'],
+    },
+    coverTitle: { type: 'Title', props: { text: 'Quarterly review', align: null, color: null }, children: [] },
+    wins: {
+      type: 'Slide',
+      props: { layout: null, background: null, notes: null, slideNumber: true },
+      children: ['winsTitle', 'winsList'],
+    },
+    winsTitle: { type: 'Title', props: { text: 'What changed', align: null, color: null }, children: [] },
+    winsList: {
+      type: 'BulletList',
+      props: { items: ['Revenue up 24%', 'Churn down to 2.1%'], ordered: null, fontSize: null, color: null },
+      children: [],
+    },
+  },
+}
+
+await renderToFile(spec, 'review.pptx')
+```
+
+The model writes this for you in practice: see [Catalogs](/catalogs) for the prompt and [Streaming](/streaming) for building it as it arrives.
+
+## Render to a file in Node
+
+`renderToFile(spec, path)` writes the file. `renderToBuffer(spec)` returns a `Uint8Array` if you want to send it somewhere else, for example as a response body. `json-render-pptx` and `json-render-docx` have the same three functions.
+
+## Download in the browser
+
+`renderToBlob(spec)` returns a `Blob` with the right MIME type:
+
+```ts
+import { renderToBlob } from 'json-render-pptx'
+
+const blob = await renderToBlob(spec)
+const link = document.createElement('a')
+link.href = URL.createObjectURL(blob)
+link.download = 'review.pptx'
+link.click()
+URL.revokeObjectURL(link.href)
+```
+
+`renderToFile` loads `node:fs` only when you call it, so importing the package in the browser is safe.
+
+## Options
+
+The render functions of all three packages take the same options as their second argument:
+
+| Option            | Meaning                                                                                      |
+| ----------------- | -------------------------------------------------------------------------------------------- |
+| `registry`        | Custom Vue components by catalog type. They win over the standard ones.                      |
+| `includeStandard` | Set to `false` to use only your `registry`. Default `true`.                                  |
+| `state`           | Merged over `spec.state`. Used by `$state`, `$cond`, `$template` and `repeat`.               |
+| `theme`           | A partial [theme](/themes).                                                                  |
+| `loadImage`       | Loads https images. See [Images and security](/images-and-security).                         |
+| `onWarn`          | Receives every skipped element and unusable prop. Without it, warnings go to `console.warn`. |
+
+## Word and report
+
+```ts
+import { renderToFile } from 'json-render-docx'
+import { renderToDocx, renderToPptx } from 'json-render-report'
+```
+
+`json-render-docx` takes a `Document` spec in the same way. `json-render-report` has `renderToPptx`, `renderToPptxBlob`, `renderToDocx` and `renderToDocxBlob` for one [report spec](/one-spec).

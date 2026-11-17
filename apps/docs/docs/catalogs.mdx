@@ -1,0 +1,89 @@
+---
+title: Catalogs
+description: Build prompts, validate specs and add your own components.
+sidebar:
+  order: 3
+---
+
+A catalog is the list of components a model may use, each with Zod props, a description and an example. Each package exports its list from a server-safe entry, `json-render-pptx/server`, `json-render-docx/server` and `json-render-report/server`. They contain the schema and the definitions and no Vue or Office writer, so they are safe in a route handler that only builds prompts.
+
+## defineCatalog
+
+```ts
+import { defineCatalog } from '@json-render/core'
+import { schema, standardComponentDefinitions } from 'json-render-pptx/server'
+
+const catalog = defineCatalog(schema, { components: standardComponentDefinitions })
+```
+
+`schema` is the flat `{ root, elements }` spec every Office catalog shares. `standardComponentDefinitions` holds one entry per [standard component](/components): its `props` (a Zod object), `slots`, `description` and `example`. The type `StandardComponentProps<'Title'>` gives the parsed props of one of them.
+
+## Prompt
+
+```ts
+const system = catalog.prompt()
+```
+
+`prompt()` returns the system prompt: the JSONL patch format, the component list with each prop, and the rules of the catalog, such as "the root must be a Deck" and "keep a title under 8 words". The rules come from the schema, so the prompt matches what the renderer expects. Pass `catalog.prompt({ customRules: [...] })` to add your own.
+
+## validate and validateProps
+
+There are two checks, and they catch different things.
+
+`catalog.validate(spec)` checks the shape: a `root`, an `elements` map, element types that exist in the catalog. It does not check the props of an element, so a title with `text: 1` passes.
+
+`validateProps(spec)` checks every element's props against the Zod schema of its component, including the limits (at most 7 bullets, a title of at most 90 characters, a table of at most 6 columns). It returns a list of `{ element, type, message }`, empty when the spec is fine.
+
+```ts
+import { validateProps } from 'json-render-pptx'
+
+const issues = validateProps(spec)
+if (issues.length > 0) console.warn(issues)
+```
+
+Use both when you want to reject a spec before rendering. The renderer itself does not reject: content it cannot use is skipped with a warning.
+
+## jsonSchema and strict mode
+
+`catalog.jsonSchema({ strict: true })` produces a schema for structured-output APIs. Strict schemas must set `additionalProperties: false` on every object, and a map with arbitrary keys cannot be written that way. `elements` is such a map, keyed by whatever names the model picks, so strict mode leaves it as an empty object: `{ "type": "object", "properties": {}, "additionalProperties": false }`.
+
+In practice this means a structured-output API does not constrain the elements. The prompt still describes them in full, and `validate` and `validateProps` check the result afterwards. Stream the spec as JSONL patches (see [Streaming](/streaming)) and validate it at the end.
+
+## Custom components
+
+Add components in two steps: describe them in a catalog, and give the renderer a Vue component for each through `registry`.
+
+```ts
+import { defineCatalog, type UIElement } from '@json-render/core'
+import { renderToBuffer, standardComponents } from 'json-render-pptx'
+import { schema, standardComponentDefinitions } from 'json-render-pptx/server'
+import { defineComponent, h, type PropType } from 'vue'
+import { z } from 'zod'
+
+const catalog = defineCatalog(schema, {
+  components: {
+    ...standardComponentDefinitions,
+    Callout: {
+      props: z.object({ text: z.string().max(200) }),
+      slots: [],
+      description: 'A highlighted sentence.',
+      example: { text: 'Churn is at an all-time low.' },
+    },
+  },
+})
+
+// A registry component receives the resolved element. This one draws bold standard text.
+const Callout = defineComponent({
+  props: { element: { type: Object as PropType<UIElement>, required: true } },
+  setup: (props) => () =>
+    h(standardComponents.Text!, {
+      element: { ...props.element, type: 'Text', props: { text: props.element.props.text, bold: true } },
+    }),
+})
+
+const bytes = await renderToBuffer(spec, { registry: { Callout } })
+```
+
+Give `catalog.prompt()` to the model and it can now emit `Callout`.
+
+A registry entry wins over a standard component of the same name, so you can also replace one. Set `includeStandard: false` to render only what is in `registry`. The `standardComponents` export holds the standard Vue components, so a custom one can wrap them as above instead of calling the Office writer directly.

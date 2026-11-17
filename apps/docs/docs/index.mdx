@@ -1,0 +1,52 @@
+---
+title: Introduction
+description: Render json-render specs to editable PowerPoint and Word files, and to a web page, from one report spec.
+sidebar:
+  order: 1
+---
+
+[json-render](https://github.com/vercel-labs/json-render) lets a model write a JSON spec that is constrained to a Zod catalog of components. The packages here are renderers for that spec. Instead of a web page or a PDF, they write real Office files: slides with text boxes, tables and native charts, and Word documents with headings, lists and tables that you can edit afterwards.
+
+The current version is {{version}}. See the [changelog](/changelog) for what each release changed.
+
+| Package              | Output                                                           | Built on                             |
+| -------------------- | ---------------------------------------------------------------- | ------------------------------------ |
+| `json-render-pptx`   | `.pptx` slides                                                   | `vue-pptx-document`                  |
+| `json-render-docx`   | `.docx` documents                                                | `vue-docx-document`                  |
+| `json-render-report` | One report catalog: a web page, a `.pptx` deck and a `.docx`     | The two above and `@json-render/vue` |
+| `json-render-office` | Shared spec walker, safe image loading, theme and schema helpers | Used by the others                   |
+
+<Frame caption="One report spec, drawn as a web page. The same spec also becomes a deck and a Word document.">
+  <img src="/gallery/one-spec-web.png" alt="A report rendered as a web page" width="380" />
+</Frame>
+
+## How it works
+
+A spec is a flat object: a `root` key and an `elements` map. Each element has a `type`, `props` and `children` (a list of keys). A renderer walks the tree from the root, looks each type up in a registry of components and mounts the result with the Office writer. Text, tables and charts come out as real Office objects, so the files stay editable.
+
+The standard components never take coordinates. A slide picks a layout and its children are placed in reading order, so the model describes content and the renderer decides where it goes.
+
+Bad content is not an error. A missing child, an unknown type or a bad prop is skipped and reported as a warning, which is what lets a spec that is still streaming render at every step. Render functions reject only when the writer itself fails.
+
+## Where to start
+
+<CardGroup cols={2}>
+  <Card title="Getting started" href="/getting-started" icon="rocket">
+    Install a package and write a file from Node or the browser.
+  </Card>
+  <Card title="Catalogs" href="/catalogs" icon="book-open">
+    Prompts, validation and custom components.
+  </Card>
+  <Card title="One spec, three outputs" href="/one-spec" icon="layers">
+    The report catalog for the web, PowerPoint and Word.
+  </Card>
+  <Card title="Components" href="/components" icon="code">
+    Every standard component with its props and a screenshot.
+  </Card>
+</CardGroup>
+
+## Status
+
+Features are checked only by opening the files in LibreOffice {{libreoffice}}. Everything else is unverified, and [Limitations](/limitations) lists what is missing. PDF output is not part of these packages.
+
+Community project. Not affiliated with or endorsed by Vercel. "json-render" is the name of the Vercel Labs project these packages render for.

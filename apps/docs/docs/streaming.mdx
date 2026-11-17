@@ -1,0 +1,70 @@
+---
+title: Streaming
+description: Build a spec from JSONL patches as a model writes it, and render the half-finished result.
+sidebar:
+  order: 5
+---
+
+A model that writes a whole spec as one JSON object makes you wait for the last character. The json-render prompt asks for something else: one JSON Patch operation per line (JSONL), root first and then one element per line.
+
+```text
+{"op":"add","path":"/root","value":"deck"}
+{"op":"add","path":"/elements/deck","value":{"type":"Deck","props":{"title":"Review","author":null,"subject":null},"children":["cover"]}}
+{"op":"add","path":"/elements/cover","value":{"type":"Slide","props":{"layout":"title","background":null,"notes":null,"slideNumber":null},"children":[]}}
+```
+
+## createSpecStreamCompiler
+
+`createSpecStreamCompiler` from `@json-render/core` turns those lines back into a spec. Push text as it arrives, in chunks of any size. It keeps the part of a line that is not finished yet and applies each complete line.
+
+```ts
+import { createSpecStreamCompiler, type Spec } from '@json-render/core'
+import { renderToBlob } from 'json-render-pptx'
+
+const compiler = createSpecStreamCompiler<Spec>()
+
+for await (const chunk of stream) {
+  const { result, newPatches } = compiler.push(chunk)
+  if (newPatches.length > 0) showProgress(result)
+}
+
+const blob = await renderToBlob(compiler.getResult())
+```
+
+`push` returns the current `result` and the `newPatches` this chunk applied. `getResult()` returns the spec so far and `reset()` starts over. Lines that are not JSON, such as a leading code fence, are ignored.
+
+## What a partial spec does
+
+Every renderer accepts a spec at any stage, including `{}`. It never throws on missing content:
+
+- No `root` yet, or a root that is not in `elements`: the file is empty. A deck has no slides and a document has one empty page.
+- A child key whose element has not arrived: that child is skipped, and its siblings render.
+- An element whose props cannot be resolved, or an unknown type: skipped.
+
+The test suites render every intermediate state of a streamed report, cut at arbitrary characters, to PowerPoint and Word. They also check that the finished stream gives the same document as the complete spec.
+
+## The warnings list
+
+Skipped content is reported through `onWarn`, one `RenderWarning` per problem, with a `code`, a `message` and the `element` key when there is one. Without `onWarn` the message goes to `console.warn`.
+
+| Code              | Meaning                                                              |
+| ----------------- | -------------------------------------------------------------------- |
+| `missing-root`    | The spec has no root element yet.                                    |
+| `missing-element` | A child key is not in `elements` (yet). Normal while streaming.      |
+| `unknown-type`    | No component is registered for the element's type.                   |
+| `bad-props`       | An element's props or its `visible` condition could not be resolved. |
+| `bad-repeat`      | A `repeat` is used outside a repeat scope.                           |
+| `blocked-image`   | An image source is not an https URL or a `data:` image.              |
+| `image-failed`    | An allowed image could not be loaded.                                |
+
+While streaming, expect `missing-element` and `missing-root` and pass a quiet `onWarn`. When the stream has ended, any warning left is a real problem: show it, or [validate](/catalogs#validate-and-validateprops) the spec and ask the model to try again.
+
+```ts
+import { renderToBlob, type RenderWarning } from 'json-render-pptx'
+
+const warnings: RenderWarning[] = []
+await renderToBlob(compiler.getResult(), { onWarn: (w) => warnings.push(w) })
+const real = warnings.filter((w) => w.code !== 'missing-element')
+```
+
+For the web renderer of `json-render-report`, `@json-render/vue`'s `Renderer` takes the growing spec directly, so the page fills in while the model writes. Write the Office file once the stream is done.

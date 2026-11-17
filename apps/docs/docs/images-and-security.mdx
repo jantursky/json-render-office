@@ -1,0 +1,53 @@
+---
+title: Images and security
+description: Which image sources are read, what is blocked, and how to replace the loader.
+sidebar:
+  order: 9
+---
+
+A spec comes from a model, and a model can be steered by whatever text it read. An `Image` element holds a `src` string, so the renderer decides what that string is allowed to reach. The Office writers read image sources themselves and would fetch URLs and read local paths without limits. For that reason the renderers load every image first, with the rules below, and give the writer only the resulting data.
+
+## What is allowed
+
+| Source                                                                                     | Result                                                        |
+| ------------------------------------------------------------------------------------------ | ------------------------------------------------------------- |
+| `data:image/png`, `jpeg`, `gif` or `svg+xml` with `;base64,`                               | Used as is.                                                   |
+| `https://...`                                                                              | Fetched with the default loader.                              |
+| Anything else: a local path, `file:`, `http:`, `ftp:`, a relative URL, other `data:` types | Blocked. The image is skipped with a `blocked-image` warning. |
+
+The default loader allows a response only when all of this holds:
+
+- The status is 2xx.
+- The content type is `image/png`, `image/jpeg`, `image/gif` or `image/svg+xml`.
+- The body is at most 10 MB.
+- It arrives within 10 seconds.
+
+A failure is an `image-failed` warning and the rest of the spec still renders. The checks are also exported as constants: `MAX_IMAGE_BYTES` and `IMAGE_TIMEOUT_MS` from `json-render-office`, and `classifySource(src)`, which returns `'data'`, `'https'` or `'blocked'`.
+
+## The loadImage hook
+
+Pass `loadImage` to replace the fetch, for example to add a host allowlist, send credentials, or go through a proxy. It receives the source and returns a `data:` URI:
+
+```ts
+import { renderToFile, type ImageLoader } from 'json-render-pptx'
+
+const allowed = new Set(['images.example.com'])
+
+const loadImage: ImageLoader = async (src) => {
+  if (!allowed.has(new URL(src).hostname)) throw new Error('Host is not allowed')
+  const response = await fetch(src, { signal: AbortSignal.timeout(5_000) })
+  const type = response.headers.get('content-type') ?? 'image/png'
+  const bytes = Buffer.from(await response.arrayBuffer())
+  return `data:${type};base64,${bytes.toString('base64')}`
+}
+
+await renderToFile(spec, 'review.pptx', { loadImage })
+```
+
+Only https sources reach `loadImage`. A `data:` image is used directly, and a blocked source never gets that far. If the loader returns anything that is not a `data:` image, the image fails with a warning.
+
+## What this does not cover
+
+- The default loader does not stop requests to private addresses. If you render specs from untrusted users on a server, use `loadImage` to resolve the host yourself and refuse internal ranges.
+- Image content is not scanned. An SVG is embedded as data and is not run, but the application that opens the file decides how to draw it.
+- Text in a spec is written to the file as it is. The renderers do not filter what a model says.

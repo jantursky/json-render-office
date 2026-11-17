@@ -47,7 +47,7 @@ export interface ImageWarning {
  * Returns the usable ones by their original source.
  */
 export async function preloadImages(
-  spec: Spec,
+  spec: Partial<Spec>,
   state: Record<string, unknown>,
   load: ImageLoader,
   warn: (w: ImageWarning) => void,
@@ -80,4 +80,51 @@ export async function preloadImages(
     }),
   )
   return loaded
+}
+
+export interface ImageSize {
+  width: number
+  height: number
+}
+
+const bytesOf = (dataUri: string): Uint8Array => {
+  const binary = atob(dataUri.slice(dataUri.indexOf(',') + 1).replace(/\s/g, ''))
+  return Uint8Array.from(binary, (c) => c.charCodeAt(0))
+}
+
+const be16 = (b: Uint8Array, at: number): number => ((b[at] ?? 0) << 8) | (b[at + 1] ?? 0)
+const le16 = (b: Uint8Array, at: number): number => (b[at] ?? 0) | ((b[at + 1] ?? 0) << 8)
+const be32 = (b: Uint8Array, at: number): number => be16(b, at) * 65536 + be16(b, at + 2)
+
+function jpegSize(b: Uint8Array): ImageSize | undefined {
+  let at = 2
+  while (at + 9 < b.length) {
+    if (b[at] !== 0xff) return undefined
+    const marker = b[at + 1] ?? 0
+    // Start-of-frame markers carry the size; 0xC4, 0xC8 and 0xCC share the range but do not.
+    if (marker >= 0xc0 && marker <= 0xcf && ![0xc4, 0xc8, 0xcc].includes(marker)) {
+      return { height: be16(b, at + 5), width: be16(b, at + 7) }
+    }
+    at += 2 + be16(b, at + 2)
+  }
+  return undefined
+}
+
+/** The pixel size of a PNG, JPEG or GIF data URI, so a slide can keep the aspect ratio. SVG gives undefined. */
+export function sniffImageSize(dataUri: string): ImageSize | undefined {
+  let bytes: Uint8Array
+  try {
+    bytes = bytesOf(dataUri)
+  } catch {
+    return undefined
+  }
+  const size =
+    bytes[0] === 0x89 && bytes[1] === 0x50
+      ? { width: be32(bytes, 16), height: be32(bytes, 20) }
+      : bytes[0] === 0x47 && bytes[1] === 0x49
+        ? { width: le16(bytes, 6), height: le16(bytes, 8) }
+        : bytes[0] === 0xff && bytes[1] === 0xd8
+          ? jpegSize(bytes)
+          : undefined
+  return size && size.width > 0 && size.height > 0 ? size : undefined
 }

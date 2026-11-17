@@ -1,0 +1,68 @@
+---
+title: Using with the AI SDK
+description: A server route that streams JSONL patches and a client that compiles them into a spec.
+sidebar:
+  order: 6
+---
+
+This page wires a model to a renderer with the [AI SDK](https://ai-sdk.dev) 7. Earlier versions name `instructions` as `system` and call `result.toTextStreamResponse()` instead. The server builds the prompt from the catalog and streams the model's JSONL back. The client compiles the stream into a spec and renders it. The model is read from the environment, so you can change it without touching code.
+
+```text title=".env"
+LLM_MODEL=provider/model
+```
+
+## Server route
+
+The route imports only `json-render-pptx/server`, so it needs no Vue and no Office writer:
+
+```ts app/api/deck/route.ts
+import { defineCatalog } from '@json-render/core'
+import { createTextStreamResponse, streamText, toTextStream } from 'ai'
+import { schema, standardComponentDefinitions } from 'json-render-pptx/server'
+
+const catalog = defineCatalog(schema, { components: standardComponentDefinitions })
+const instructions = catalog.prompt()
+
+export async function POST(request: Request): Promise<Response> {
+  const { prompt } = (await request.json()) as { prompt: string }
+  const result = streamText({ model: process.env.LLM_MODEL!, instructions, prompt })
+  return createTextStreamResponse({ stream: toTextStream({ stream: result.stream }) })
+}
+```
+
+`model` takes a string in the form `provider/model`, which the AI SDK resolves through its gateway. You can also pass a provider instance.
+
+## Client
+
+The client reads the response body, feeds each chunk to the compiler, and renders the spec when the stream ends:
+
+```ts
+import { createSpecStreamCompiler, type Spec } from '@json-render/core'
+import { renderToBlob } from 'json-render-pptx'
+
+export async function generateDeck(prompt: string, onProgress: (spec: Spec) => void): Promise<Blob> {
+  const response = await fetch('/api/deck', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ prompt }),
+  })
+  if (!response.ok || !response.body) throw new Error(`The route failed: ${response.status}`)
+
+  const compiler = createSpecStreamCompiler<Spec>()
+  const reader = response.body.pipeThrough(new TextDecoderStream()).getReader()
+  for (let chunk = await reader.read(); !chunk.done; chunk = await reader.read()) {
+    const { result, newPatches } = compiler.push(chunk.value)
+    if (newPatches.length > 0) onProgress(result)
+  }
+  return renderToBlob(compiler.getResult(), { onWarn: () => {} })
+}
+```
+
+`onProgress` can draw a preview with the web renderer of `json-render-report` while the model writes. Pass `onWarn` a real handler to collect problems once the stream has ended, as described in [Streaming](/streaming).
+
+## Things to check
+
+- Validate before you trust the result: [`validateProps`](/catalogs#validate-and-validateprops) catches limits the model went over.
+- The prompt asks for JSONL and nothing else, but models sometimes add prose or a code fence. The compiler ignores lines that are not JSON.
+- Images in a spec are fetched by the renderer. Read [Images and security](/images-and-security) before you render model output on a server.
+- `json-render-pptx` needs a Node runtime or a browser. Check that your route's runtime supports the packages you import, or render on the client as above.

@@ -1,0 +1,61 @@
+---
+title: Themes
+description: One base theme for slides, pages and the web, with per-package sizes.
+sidebar:
+  order: 4
+---
+
+The look comes from a theme, not from props. Every renderer takes a partial `theme` option and merges it over the defaults, so you set only what you change:
+
+```ts
+import { renderToFile } from 'json-render-pptx'
+
+await renderToFile(spec, 'review.pptx', {
+  theme: {
+    colors: { accent: '#0F766E', tableHeader: '#134E4A' },
+    fonts: { heading: 'Georgia' },
+    sizes: { title: 32 },
+  },
+})
+```
+
+## BaseTheme
+
+`BaseTheme` is shared by every package. It has `colors`, `fonts` (`heading` and `body`) and a `palette`: the series colors of charts, in order. Colors are hex strings. The base input is exported from `json-render-office` as `BaseThemeInput`, along with `defaultBaseTheme` and `resolveBaseTheme`.
+
+Because all three renderers read the same tokens, one theme object styles a deck, a document and the web page alike. Fonts are names only: nothing is embedded, so a font that is not installed on the reader's computer is replaced by the application.
+
+Defaults:
+
+<include>./_generated/themes.md</include>
+
+## Sizes per package
+
+Sizes are in points. `json-render-pptx` has `title`, `coverTitle`, `subtitle` and `body`. `json-render-docx` has `body`, `title`, `h1`, `h2` and `h3`. They are listed above next to their defaults. Pass a partial `sizes` object to change some of them.
+
+## Web
+
+The web renderer of `json-render-report` reads the same base theme as CSS custom properties. `themeStyle(theme?)` returns them as a style object, and `webStyles` is an optional stylesheet that uses them. Every class is prefixed `jr-`.
+
+```vue
+<script setup lang="ts">
+import type { Spec } from '@json-render/core'
+import { JSONUIProvider, Renderer } from '@json-render/vue'
+import { themeStyle, webRegistry, webStyles } from 'json-render-report/web'
+
+defineProps<{ spec: Spec }>()
+
+const style = themeStyle({ colors: { accent: '#0F766E' } })
+document.head.append(Object.assign(document.createElement('style'), { textContent: webStyles }))
+</script>
+
+<template>
+  <div :style="style">
+    <JSONUIProvider :registry="webRegistry">
+      <Renderer :spec="spec" :registry="webRegistry" />
+    </JSONUIProvider>
+  </div>
+</template>
+```
+
+The custom properties are `--jr-background`, `--jr-text`, `--jr-muted`, `--jr-heading`, `--jr-accent`, `--jr-table-header`, `--jr-on-table-header`, `--jr-table-stripe`, `--jr-rule`, `--jr-font-heading`, `--jr-font-body` and `--jr-series-0` onward. Override any of them in your own CSS to restyle the page without a theme object.

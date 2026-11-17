@@ -1,0 +1,17 @@
+/* The design tokens of the project (design/tokens.css), mapped onto Blume's. The accent stays on filled actions. */
+:root {
+  --blume-radius: 8px;
+  --blume-background: #ffffff;
+  --blume-foreground: #364153;
+  --blume-muted: #f5f5f5;
+  --blume-muted-foreground: #4a5565;
+  --blume-border: #e5e7eb;
+}
+
+:root[data-theme='dark'] {
+  --blume-background: #111113;
+  --blume-foreground: #d1d5db;
+  --blume-muted: #18181b;
+  --blume-muted-foreground: #9ca3af;
+  --blume-border: #2a2a2d;
+}

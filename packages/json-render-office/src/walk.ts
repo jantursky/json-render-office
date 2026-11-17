@@ -11,6 +11,9 @@ import { h, type Component, type VNode } from 'vue'
 
 import type { WarnHandler } from './warnings'
 
+/** A spec while it streams in: `root` and `elements` do not exist until the first patches land. */
+export type StreamedSpec = Partial<Spec>
+
 export type ComponentRegistry = Record<string, Component>
 
 export interface WalkOptions {
@@ -26,8 +29,8 @@ interface Scope {
   basePath?: string
 }
 
-function walkElement(key: string, spec: Spec, options: WalkOptions, scope: Scope): VNode[] {
-  const element = (spec.elements ?? {})[key]
+function walkElement(key: string, spec: StreamedSpec, options: WalkOptions, scope: Scope): VNode[] {
+  const element = spec.elements?.[key]
   if (!element) {
     options.warn({ code: 'missing-element', message: `Element "${key}" is not in the spec (yet).`, element: key })
     return []
@@ -65,7 +68,7 @@ function walkElement(key: string, spec: Spec, options: WalkOptions, scope: Scope
   return [h(Component, { key, element: resolved }, { default: () => children })]
 }
 
-function renderChildren(element: UIElement, spec: Spec, options: WalkOptions, scope: Scope): VNode[] {
+function renderChildren(element: UIElement, spec: StreamedSpec, options: WalkOptions, scope: Scope): VNode[] {
   const keys = element.children ?? []
   if (!element.repeat) return keys.flatMap((child) => walkElement(child, spec, options, scope))
 
@@ -85,7 +88,7 @@ function renderChildren(element: UIElement, spec: Spec, options: WalkOptions, sc
  * Turns a spec into Vue nodes by looking each element's type up in the registry. A missing root,
  * missing children and unknown types are skipped with a warning, so a half-streamed spec renders.
  */
-export function walkSpec(spec: Spec, options: WalkOptions): VNode[] {
+export function walkSpec(spec: StreamedSpec, options: WalkOptions): VNode[] {
   // A stream starts as `{}`: neither `root` nor `elements` exist until the first patch lands.
   if (!spec.root || !(spec.root in (spec.elements ?? {}))) {
     options.warn({ code: 'missing-root', message: 'The spec has no root element yet.' })

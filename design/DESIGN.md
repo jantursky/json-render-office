@@ -44,7 +44,7 @@ Colors come from the ecosystem (Vue), not from the accent: `--logo-primary` `#42
 
 ## Components
 
-- **Primary button**: accent background, white text, 8px radius, 12px 24px padding, 14 to 16px weight 500, uppercase, 0.025em tracking, trailing arrow. At most one per screen.
+- **Primary button**: accent background, white text (dark mode: near-black text, because white on the lighter dark-mode accent is only about 3:1), 8px radius, 12px 24px padding, 14 to 16px weight 500, uppercase, 0.025em tracking, trailing arrow. At most one per screen.
 - **Dark button**: carbon background, white text, same metrics.
 - **Ghost button**: transparent, 1px `--border`.
 - **Card**: surface background, 1px `--border-soft`, 8px radius, 32px padding.

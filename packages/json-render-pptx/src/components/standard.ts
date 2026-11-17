@@ -1,4 +1,5 @@
 import type { UIElement } from '@json-render/core'
+import { sniffImageSize } from 'json-render-office'
 import { defineComponent, h, inject, provide, type Component, type PropType, type VNode } from 'vue'
 import {
   Chart as PptxChart,
@@ -164,7 +165,7 @@ const Table = defineStandard('Table', (p, _children, { theme }) => {
   const columns = p.columns.length
   const header = p.columns.map((text) => ({
     text,
-    options: { bold: true, color: theme.colors.onAccent, fill: { color: theme.colors.tableHeader } },
+    options: { bold: true, color: theme.colors.onTableHeader, fill: { color: theme.colors.tableHeader } },
   }))
   const body = p.rows.map((row, index) =>
     Array.from({ length: columns }, (_, column) => ({
@@ -213,14 +214,19 @@ const ImageComponent = defineComponent({
     return () => {
       const p = props.element.props as StandardProps['Image']
       const data = images.get(p.src)
-      return data
-        ? h(PptxImage, {
-            src: data,
-            altText: p.alt,
-            sizing: { type: 'contain', w: '100%', h: '100%' },
-            style: { flexGrow: 1 },
-          })
-        : null
+      if (!data) return null
+      const size = sniffImageSize(data)
+      return h(PptxImage, {
+        src: data,
+        altText: p.alt,
+        // Keep the picture's shape and stay inside the margins. A picture of unknown size (SVG) is assumed 16:9.
+        style: {
+          flexGrow: 1,
+          aspectRatio: size ? size.width / size.height : 16 / 9,
+          alignSelf: 'flex-start',
+          maxWidth: '100%',
+        },
+      })
     }
   },
 })
