@@ -62,6 +62,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "test:oracle": "ORACLE=1 vitest run test/oracle.test.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint:package": "publint --strict && attw --pack . --profile esm-only"
   },
