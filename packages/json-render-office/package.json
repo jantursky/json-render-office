@@ -1,0 +1,75 @@
+{
+  "name": "json-render-office",
+  "version": "1.0.0",
+  "description": "Shared pieces of the json-render Office renderers: spec walker, safe image loading, warnings.",
+  "license": "MIT",
+  "author": {
+    "name": "Jan Tursky",
+    "email": "jan.tursky@gmail.com",
+    "url": "https://jantursky.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jantursky/json-render-office.git",
+    "directory": "packages/json-render-office"
+  },
+  "bugs": {
+    "url": "https://github.com/jantursky/json-render-office/issues"
+  },
+  "type": "module",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=20.19"
+  },
+  "keywords": [
+    "json-render",
+    "office",
+    "pptx",
+    "docx",
+    "generative-ui",
+    "llm",
+    "vue"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "vite build",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint:package": "publint --strict && attw --pack . --profile esm-only"
+  },
+  "dependencies": {},
+  "peerDependencies": {
+    "@json-render/core": "^0.23.1",
+    "vue": "^3.5.0"
+  },
+  "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.5",
+    "@json-render/core": "0.23.1",
+    "@types/node": "^22",
+    "@vitest/coverage-v8": "5.1.0",
+    "publint": "^0.3.25",
+    "typescript": "~5.9.3",
+    "vite": "^8",
+    "vite-plugin-dts": "^5",
+    "vitest": "5.1.0",
+    "vue": "^3.5.0"
+  }
+}
