@@ -4,6 +4,6 @@
     "path": "dist/index.js",
     "ignore": ["vue", "@json-render/core"],
     "gzip": true,
-    "limit": "3 kB"
+    "limit": "4 kB"
   }
 ]

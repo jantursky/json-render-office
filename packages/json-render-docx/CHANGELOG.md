@@ -4,6 +4,10 @@ All notable changes to `json-render-docx` are listed here. The format follows [K
 
 ## [Unreleased]
 
+### Fixed
+
+- Bad props, cycles and a `repeat` over a non-list are skipped with a warning instead of rejecting the render. An image whose bytes are not the declared type is left out with an `image-failed` warning.
+
 ## [1.0.0] - Unreleased
 
 ### Added

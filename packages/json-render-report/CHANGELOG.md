@@ -4,6 +4,10 @@ All notable changes to `json-render-report` are listed here. The format follows 
 
 ## [Unreleased]
 
+### Fixed
+
+- The web preview loads only `https:` and `data:` images, as the Office renderers do, and chart colours cycle correctly for palettes of any length.
+
 ## [1.0.0] - Unreleased
 
 ### Added

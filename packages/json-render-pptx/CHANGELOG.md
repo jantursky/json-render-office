@@ -4,6 +4,11 @@ All notable changes to `json-render-pptx` are listed here. The format follows [K
 
 ## [Unreleased]
 
+### Fixed
+
+- Table borders use the theme's rule colour.
+- Bad props, cycles and a `repeat` over a non-list are skipped with a warning instead of rejecting the render.
+
 ## [1.0.0] - Unreleased
 
 ### Added

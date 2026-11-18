@@ -46,4 +46,22 @@ describe('themeStyle', () => {
     expect(style['--jr-series-0']).toBe('#111111')
     expect(style['--jr-font-body']).toContain('Calibri')
   })
+
+  it('drops image sources the Office renderers refuse', async () => {
+    const spec = reportSpec()
+    const image = Object.values(spec.elements).find((e) => e.type === 'Image')!
+    for (const src of ['http://169.254.169.254/x', '/etc/passwd', 'file:///etc/hosts']) {
+      image.props.src = src
+      expect(await html(spec)).not.toContain(src)
+    }
+    image.props.src = 'https://example.com/a.png'
+    expect(await html(spec)).toContain('src="https://example.com/a.png"')
+  })
+
+  it('cycles a short palette over the series colours', () => {
+    const style = themeStyle({ palette: ['#111111', '#222222'] })
+    expect(style['--jr-series-0']).toBe('#111111')
+    expect(style['--jr-series-3']).toBe('#222222')
+    expect(style['--jr-series-11']).toBe('#222222')
+  })
 })

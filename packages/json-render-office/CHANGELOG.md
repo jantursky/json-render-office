@@ -4,6 +4,13 @@ All notable changes to `json-render-office` are listed here. The format follows 
 
 ## [Unreleased]
 
+### Fixed
+
+- A spec that contains itself, a `repeat` over a value that is not a list, and element types named like `toString` no longer crash a render. They are skipped with a warning.
+- Props that fail their component's schema are skipped with a `bad-props` warning instead of throwing. A missing nullable prop counts as `null`.
+- Images inside a `repeat` are loaded. Data URIs must start with the bytes of the type they declare.
+- The default image loader enforces the 10 MB cap while the body streams, follows at most three redirects, refuses redirects away from https and private addresses written as literals, and a spec may use at most 50 different images.
+
 ## [1.0.0] - Unreleased
 
 ### Added

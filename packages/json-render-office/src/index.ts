@@ -2,6 +2,8 @@ export { walkSpec, type ComponentRegistry, type StreamedSpec, type WalkOptions }
 export { consoleWarn, type RenderWarning, type WarnHandler, type WarningCode } from './warnings'
 export {
   classifySource,
+  hasImageSignature,
+  isPrivateHost,
   fetchImage,
   IMAGE_TIMEOUT_MS,
   MAX_IMAGE_BYTES,

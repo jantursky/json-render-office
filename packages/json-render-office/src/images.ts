@@ -1,5 +1,11 @@
 import type { Spec } from '@json-render/core'
-import { resolveElementProps } from '@json-render/core'
+import {
+  getByPath,
+  resolveElementProps,
+  resolveRepeatItemStatePath,
+  resolveRepeatStatePath,
+  type PropResolutionContext,
+} from '@json-render/core'
 
 /** Turns an image source into a `data:` URI. Replace it to add auth, a proxy or a host allowlist. */
 export type ImageLoader = (src: string) => Promise<string>
@@ -52,14 +58,65 @@ async function readCapped(response: Response): Promise<Uint8Array> {
   return bytes
 }
 
+const MAX_REDIRECTS = 3
+
+/** True for loopback, private, link-local and internal host names and addresses, written as literals. */
+export function isPrivateHost(hostname: string): boolean {
+  const host = hostname.toLowerCase().replace(/^\[|\]$/g, '')
+  if (host === 'localhost' || host.endsWith('.localhost') || host.endsWith('.local') || host.endsWith('.internal')) {
+    return true
+  }
+  const v4 = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(host)
+  if (v4) {
+    const [a = 0, b = 0] = v4.slice(1).map(Number)
+    return (
+      a === 0 ||
+      a === 10 ||
+      a === 127 ||
+      (a === 100 && b >= 64 && b <= 127) ||
+      (a === 169 && b === 254) ||
+      (a === 172 && b >= 16 && b <= 31) ||
+      (a === 192 && b === 168)
+    )
+  }
+  if (host.includes(':')) {
+    const mapped = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/.exec(host)
+    if (mapped?.[1]) return isPrivateHost(mapped[1])
+    return host === '::' || host === '::1' || /^f[cd]/.test(host) || /^fe[89ab]/.test(host)
+  }
+  return false
+}
+
+function assertPublicHttps(url: URL): void {
+  if (url.protocol !== 'https:') throw new Error('Only https URLs are loaded')
+  if (isPrivateHost(url.hostname)) throw new Error('Private network addresses are not loaded')
+}
+
 /**
  * Fetches an https image with a timeout, a status check, a type check and a size cap that is
- * enforced while the body streams. A redirect to anything but https is refused. It does not block
- * private network addresses: pass a `loadImage` with a host allowlist when specs are untrusted.
+ * enforced while the body streams. Redirects are followed by hand, up to three, and every hop must
+ * be https and must not name a private network address written as a literal. A host name that
+ * resolves to a private address is not caught: pass a `loadImage` with a host allowlist when specs
+ * are untrusted.
  */
 export const fetchImage: ImageLoader = async (src) => {
-  const response = await fetch(src, { signal: AbortSignal.timeout(IMAGE_TIMEOUT_MS) })
-  if (response.url && !/^https:\/\//i.test(response.url)) throw new Error('Redirected away from https')
+  const signal = AbortSignal.timeout(IMAGE_TIMEOUT_MS)
+  let url = new URL(src)
+  let response: Response | undefined
+  for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+    assertPublicHttps(url)
+    response = await fetch(url, { signal, redirect: 'manual' })
+    // A browser hides the target of a manual redirect, but also never reaches a private network for us.
+    if (response.type === 'opaqueredirect') {
+      response = await fetch(url, { signal })
+      break
+    }
+    const location = response.headers.get('location')
+    if (response.status < 300 || response.status >= 400 || !location) break
+    if (hop === MAX_REDIRECTS) throw new Error('Too many redirects')
+    url = new URL(location, url)
+  }
+  if (!response) throw new Error('No response')
   if (!response.ok) throw new Error(`HTTP ${response.status}`)
   const type = response.headers.get('content-type')?.split(';')[0]?.trim().toLowerCase() ?? ''
   if (!/^image\/(png|jpe?g|gif|svg\+xml)$/.test(type)) throw new Error(`Unsupported content type "${type}"`)
@@ -73,6 +130,51 @@ export interface ImageWarning {
 }
 
 /**
+ * The source of every `Image` the walker can reach, resolved the way the walker resolves it: inside a
+ * `repeat` once per item. Visibility is not evaluated, so a hidden image is still loaded.
+ */
+function collectImageSources(spec: Partial<Spec>, state: Record<string, unknown>): Set<string> {
+  const sources = new Set<string>()
+  const elements = spec.elements ?? {}
+
+  const visit = (key: string, scope: PropResolutionContext, path: ReadonlySet<string>): void => {
+    if (path.has(key) || !Object.hasOwn(elements, key)) return
+    const element = elements[key]
+    if (!element) return
+    if (element.type === 'Image') {
+      try {
+        const props = resolveElementProps(element.props, scope)
+        if (typeof props.src === 'string') sources.add(props.src)
+      } catch {
+        // The walker reports unusable props; nothing to load here.
+      }
+    }
+    const next = new Set(path).add(key)
+    const keys = element.children ?? []
+    if (!element.repeat) {
+      for (const child of keys) visit(child, scope, next)
+      return
+    }
+    const statePath = resolveRepeatStatePath(element.repeat.statePath, scope.repeatBasePath)
+    if (statePath === undefined) return
+    const items: unknown = getByPath(state, statePath)
+    if (!Array.isArray(items)) return
+    items.forEach((item: unknown, index) => {
+      const inner: PropResolutionContext = {
+        stateModel: state,
+        repeatItem: item,
+        repeatIndex: index,
+        repeatBasePath: resolveRepeatItemStatePath(statePath, index),
+      }
+      for (const child of keys) visit(child, inner, next)
+    })
+  }
+
+  if (spec.root) visit(spec.root, { stateModel: state }, new Set())
+  return sources
+}
+
+/**
  * Loads every `Image` source in a spec before rendering, because the writer reads sources
  * itself and would otherwise fetch URLs and read local paths without these limits.
  * Returns the usable ones by their original source.
@@ -83,16 +185,7 @@ export async function preloadImages(
   load: ImageLoader,
   warn: (w: ImageWarning) => void,
 ): Promise<Map<string, string>> {
-  const sources = new Set<string>()
-  for (const element of Object.values(spec.elements ?? {})) {
-    if (element.type !== 'Image') continue
-    try {
-      const props = resolveElementProps(element.props, { stateModel: state })
-      if (typeof props.src === 'string') sources.add(props.src)
-    } catch {
-      // The walker reports unusable props; nothing to load here.
-    }
-  }
+  const sources = collectImageSources(spec, state)
 
   const loaded = new Map<string, string>()
   const wanted = [...sources]
@@ -109,6 +202,7 @@ export async function preloadImages(
         const data = classifySource(src) === 'data' ? src : await load(src)
         if (classifySource(data) !== 'data') throw new Error('The loader must return a data: image')
         if (data.length > MAX_IMAGE_BYTES * 1.4) throw new Error('Image is larger than 10 MB')
+        if (!hasImageSignature(data)) throw new Error('The data is not the image type it claims to be')
         loaded.set(src, data)
       } catch (error) {
         warn({ src, blocked: false, message: error instanceof Error ? error.message : 'Could not load the image.' })
@@ -116,6 +210,31 @@ export async function preloadImages(
     }),
   )
   return loaded
+}
+
+/** Whether the bytes of a data URI start the way its declared image type says they do. */
+export function hasImageSignature(dataUri: string): boolean {
+  const type = /^data:image\/([a-z0-9+]+);/i.exec(dataUri)?.[1]?.toLowerCase()
+  let bytes: Uint8Array
+  try {
+    bytes = bytesOf(dataUri)
+  } catch {
+    return false
+  }
+  const starts = (...signature: number[]): boolean => signature.every((byte, at) => bytes[at] === byte)
+  switch (type) {
+    case 'png':
+      return starts(0x89, 0x50, 0x4e, 0x47)
+    case 'jpg':
+    case 'jpeg':
+      return starts(0xff, 0xd8, 0xff)
+    case 'gif':
+      return starts(0x47, 0x49, 0x46, 0x38)
+    case 'svg+xml':
+      return /^\s*(<\?xml|<svg|<!--|<!doctype svg)/i.test(new TextDecoder().decode(bytes.subarray(0, 256)))
+    default:
+      return false
+  }
 }
 
 export interface ImageSize {
