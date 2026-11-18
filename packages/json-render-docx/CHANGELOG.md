@@ -4,11 +4,13 @@ All notable changes to `json-render-docx` are listed here. The format follows [K
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-11-18
+
 ### Fixed
 
 - Bad props, cycles and a `repeat` over a non-list are skipped with a warning instead of rejecting the render. An image whose bytes are not the declared type is left out with an `image-failed` warning.
 
-## [1.0.0] - Unreleased
+## [1.0.0] - 2026-11-17
 
 ### Added
 
@@ -18,4 +20,5 @@ All notable changes to `json-render-docx` are listed here. The format follows [K
 - `json-render-docx/server` exports the schema and component definitions without Vue or the Word writer, for code that only builds prompts.
 - An agent skill that tells a model how to write specs for the catalog.
 
+[1.0.1]: https://www.npmjs.com/package/json-render-docx/v/1.0.1
 [1.0.0]: https://www.npmjs.com/package/json-render-docx/v/1.0.0

@@ -1,6 +1,6 @@
 {
   "name": "json-render-pptx",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Render json-render specs to editable PowerPoint (.pptx) files with real text boxes, tables and native charts.",
   "license": "MIT",
   "author": {
@@ -63,7 +63,7 @@
     "size": "size-limit"
   },
   "dependencies": {
-    "json-render-office": "^1.0.0",
+    "json-render-office": "^1.0.1",
     "vue-pptx-document": "^1.4.0"
   },
   "peerDependencies": {

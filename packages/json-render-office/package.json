@@ -1,6 +1,6 @@
 {
   "name": "json-render-office",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Shared pieces of the json-render Office renderers: spec walker, safe image loading, warnings.",
   "license": "MIT",
   "author": {
