@@ -20,7 +20,7 @@ const readPrompt = async (request: Request): Promise<string | null> => {
 }
 
 /**
- * With GOOGLE_GENERATIVE_AI_API_KEY set, LLM_MODEL is a Google model id such as "gemini-2.5-flash-lite"
+ * With GOOGLE_GENERATIVE_AI_API_KEY set, LLM_MODEL is a Google model id such as "gemini-3.5-flash-lite"
  * and is called directly. Otherwise it is "provider/model" and goes through the AI Gateway.
  */
 const pickModel = (name: string) => (process.env.GOOGLE_GENERATIVE_AI_API_KEY ? google(name) : name)
@@ -41,8 +41,8 @@ export async function POST(request: Request): Promise<Response> {
     abortSignal: request.signal,
   })
 
-  // A failed model call surfaces while the first chunk is read. Answer with an error then,
-  // instead of a 200 with an empty body.
+  // A failed model call ends the stream before any text, or throws on the first read. Answer with an
+  // error then, instead of a 200 with an empty body.
   const reader = toTextStream({ stream: result.stream }).getReader()
   let first: ReadableStreamReadResult<string>
   try {
@@ -51,14 +51,13 @@ export async function POST(request: Request): Promise<Response> {
     console.error(error)
     return fail(502, 'model-failed')
   }
+  if (first.done) return fail(502, 'model-failed')
 
   const stream = new ReadableStream<string>({
     start(controller) {
-      if (!first.done) controller.enqueue(first.value)
-      else controller.close()
+      controller.enqueue(first.value)
     },
     async pull(controller) {
-      if (first.done) return
       const next = await reader.read()
       if (next.done) controller.close()
       else controller.enqueue(next.value)
