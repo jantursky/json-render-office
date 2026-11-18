@@ -89,7 +89,7 @@ jobs:
             test "${TAG#v}" = "$version" || { echo "Tag $TAG does not match $name@$version" >&2; exit 1; }
           done
       - run: bun install --frozen-lockfile
-      - run: bunx playwright install --with-deps chromium
+      - run: bunx playwright install --with-deps
       # Type-aware lint resolves the workspace packages through their built types.
       - run: bun run build
       - run: bun run check
