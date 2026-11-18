@@ -90,8 +90,9 @@ jobs:
           done
       - run: bun install --frozen-lockfile
       - run: bunx playwright install --with-deps chromium
-      - run: bun run check
+      # Type-aware lint resolves the workspace packages through their built types.
       - run: bun run build
+      - run: bun run check
       - run: bun run size
       - run: bun run lint:package
       - run: bun run test:pack
