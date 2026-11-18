@@ -1,4 +1,5 @@
 import { defineCatalog } from '@json-render/core'
+import { google } from '@ai-sdk/google'
 import { createTextStreamResponse, streamText, toTextStream } from 'ai'
 import { schema, standardComponentDefinitions } from 'json-render-report/server'
 
@@ -18,6 +19,12 @@ const readPrompt = async (request: Request): Promise<string | null> => {
   return trimmed.length > 0 && trimmed.length <= MAX_PROMPT_LENGTH ? trimmed : null
 }
 
+/**
+ * With GOOGLE_GENERATIVE_AI_API_KEY set, LLM_MODEL is a Google model id such as "gemini-2.5-flash-lite"
+ * and is called directly. Otherwise it is "provider/model" and goes through the AI Gateway.
+ */
+const pickModel = (name: string) => (process.env.GOOGLE_GENERATIVE_AI_API_KEY ? google(name) : name)
+
 /** Streams the report spec as JSONL patches, the text format json-render's prompt asks the model for. */
 export async function POST(request: Request): Promise<Response> {
   const model = process.env.LLM_MODEL
@@ -27,11 +34,36 @@ export async function POST(request: Request): Promise<Response> {
   if (prompt === null) return fail(400, 'invalid-prompt')
 
   const result = streamText({
-    model,
+    model: pickModel(model),
     instructions: catalog.prompt(),
     prompt,
     maxOutputTokens: MAX_OUTPUT_TOKENS,
     abortSignal: request.signal,
   })
-  return createTextStreamResponse({ stream: toTextStream({ stream: result.stream }) })
+
+  // A failed model call surfaces while the first chunk is read. Answer with an error then,
+  // instead of a 200 with an empty body.
+  const reader = toTextStream({ stream: result.stream }).getReader()
+  let first: ReadableStreamReadResult<string>
+  try {
+    first = await reader.read()
+  } catch (error) {
+    console.error(error)
+    return fail(502, 'model-failed')
+  }
+
+  const stream = new ReadableStream<string>({
+    start(controller) {
+      if (!first.done) controller.enqueue(first.value)
+      else controller.close()
+    },
+    async pull(controller) {
+      if (first.done) return
+      const next = await reader.read()
+      if (next.done) controller.close()
+      else controller.enqueue(next.value)
+    },
+    cancel: (reason: unknown) => reader.cancel(reason),
+  })
+  return createTextStreamResponse({ stream })
 }

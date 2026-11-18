@@ -46,6 +46,7 @@
     "vue-eslint-parser": "^10"
   },
   "dependencies": {
+    "@ai-sdk/google": "^4",
     "@json-render/core": "0.23.1",
     "ai": "^7",
     "json-render-report": "workspace:*"
