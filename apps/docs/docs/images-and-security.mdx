@@ -24,6 +24,26 @@ The default loader allows a response only when all of this holds:
 
 A failure is an `image-failed` warning and the rest of the spec still renders. The checks are also exported as constants: `MAX_IMAGE_BYTES` and `IMAGE_TIMEOUT_MS` from `json-render-office`, and `classifySource(src)`, which returns `'data'`, `'https'` or `'blocked'`.
 
+## Limits and cancellation
+
+Pass `imageOptions` to tune the default loader without replacing it. Every field is optional and the defaults are the ones above.
+
+| Field          | Default    | Effect                                                                                                                                                  |
+| -------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `timeoutMs`    | `10000`    | Time before one remote image is given up. Applies to the default loader.                                                                                |
+| `signal`       | none       | An `AbortSignal`. Aborting it stops pending loads and rejects the render with the abort reason.                                                         |
+| `concurrency`  | `6`        | How many images load at the same time. Changes the timing only, not the output.                                                                         |
+| `maxBytes`     | `10485760` | Byte cap per image. An image over it is skipped with a `blocked-image` warning.                                                                         |
+| `allowedHosts` | none       | Host names remote images may come from, compared case-insensitively. Other hosts are skipped with `blocked-image`, and redirects must stay on the list. |
+
+```ts
+await renderToFile(spec, 'review.pptx', {
+  imageOptions: { timeoutMs: 5_000, concurrency: 4, allowedHosts: ['images.example.com'] },
+})
+```
+
+With `allowedHosts` set, a browser that hides redirect targets refuses the redirect, because it cannot check where it leads. Use `loadImage` in that case.
+
 ## The loadImage hook
 
 Pass `loadImage` to replace the fetch, for example to add a host allowlist, send credentials, or go through a proxy. It receives the source and returns a `data:` URI:
@@ -48,6 +68,7 @@ Only https sources reach `loadImage`. A `data:` image is used directly, and a bl
 
 ## What this does not cover
 
-- The default loader does not stop requests to private addresses. If you render specs from untrusted users on a server, use `loadImage` to resolve the host yourself and refuse internal ranges.
+- The default loader refuses private addresses written as literals (`10.0.0.5`, `127.0.0.1`, `localhost`), but it cannot see a public host name that resolves to a private address (DNS rebinding). The renderer runs in browsers and workers, where it cannot resolve DNS. If you render specs from untrusted users on a server, use `loadImage` to resolve the host yourself, check the result against internal ranges, and fetch the checked address.
+- `timeoutMs` applies to the default loader only. A custom `loadImage` must set its own timeout. `signal` always rejects the render, but it stops in-flight requests only in the default loader.
 - Image content is not scanned. An SVG is embedded as data and is not run, but the application that opens the file decides how to draw it.
 - Text in a spec is written to the file as it is. The renderers do not filter what a model says.

@@ -32,9 +32,28 @@ function toBase64(bytes: Uint8Array): string {
   return btoa(binary)
 }
 
-async function readCapped(response: Response): Promise<Uint8Array> {
+/** A source the loader refuses on purpose. Reported as `blocked-image`, not as a failed load. */
+export class ImageBlockedError extends Error {}
+
+/** Options for the built-in loader and for the image step of a render. */
+export interface ImageLoadOptions {
+  /** Milliseconds before the built-in loader gives up on one image. Default 10000. */
+  timeoutMs?: number
+  /** Aborting it stops pending loads and rejects the render. */
+  signal?: AbortSignal
+  /** Images fetched at the same time. Default 6. */
+  concurrency?: number
+  /** Byte cap per image. Default 10 MB. */
+  maxBytes?: number
+  /** Host names (case-insensitive) that remote images may come from. Unset allows any public host. */
+  allowedHosts?: readonly string[]
+}
+
+const sizeMessage = (maxBytes: number): string => `Image is larger than ${maxBytes / (1024 * 1024)} MB`
+
+async function readCapped(response: Response, maxBytes: number): Promise<Uint8Array> {
   const declared = Number(response.headers.get('content-length'))
-  if (declared > MAX_IMAGE_BYTES) throw new Error('Image is larger than 10 MB')
+  if (declared > maxBytes) throw new ImageBlockedError(sizeMessage(maxBytes))
   const reader = response.body?.getReader()
   if (!reader) return new Uint8Array(await response.arrayBuffer())
   const chunks: Uint8Array[] = []
@@ -43,9 +62,9 @@ async function readCapped(response: Response): Promise<Uint8Array> {
     const { done, value } = await reader.read()
     if (done) break
     total += value.length
-    if (total > MAX_IMAGE_BYTES) {
+    if (total > maxBytes) {
       await reader.cancel()
-      throw new Error('Image is larger than 10 MB')
+      throw new ImageBlockedError(sizeMessage(maxBytes))
     }
     chunks.push(value)
   }
@@ -93,35 +112,48 @@ function assertPublicHttps(url: URL): void {
 }
 
 /**
- * Fetches an https image with a timeout, a status check, a type check and a size cap that is
- * enforced while the body streams. Redirects are followed by hand, up to three, and every hop must
- * be https and must not name a private network address written as a literal. A host name that
- * resolves to a private address is not caught: pass a `loadImage` with a host allowlist when specs
- * are untrusted.
+ * Builds the built-in loader: an https fetch with a timeout, a status check, a type check and a size
+ * cap enforced while the body streams. Redirects are followed by hand, up to three, and every hop must
+ * be https, must not name a private address written as a literal and, when `allowedHosts` is set, must
+ * be on the list. A host name that resolves to a private address is not caught: pass a `loadImage`
+ * with its own resolution when specs are untrusted. When `allowedHosts` is set and the runtime hides
+ * a redirect (browsers), the load is refused, because the target cannot be checked.
  */
-export const fetchImage: ImageLoader = async (src) => {
-  const signal = AbortSignal.timeout(IMAGE_TIMEOUT_MS)
-  let url = new URL(src)
-  let response: Response | undefined
-  for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
-    assertPublicHttps(url)
-    response = await fetch(url, { signal, redirect: 'manual' })
-    // A browser hides the target of a manual redirect, but also never reaches a private network for us.
-    if (response.type === 'opaqueredirect') {
-      response = await fetch(url, { signal })
-      break
+export function createImageLoader(options: ImageLoadOptions = {}): ImageLoader {
+  const { timeoutMs = IMAGE_TIMEOUT_MS, signal: caller, maxBytes = MAX_IMAGE_BYTES, allowedHosts } = options
+  const allowed = allowedHosts?.map((host) => host.toLowerCase())
+  return async (src) => {
+    const timeout = AbortSignal.timeout(timeoutMs)
+    const signal = caller ? AbortSignal.any([timeout, caller]) : timeout
+    let url = new URL(src)
+    let response: Response | undefined
+    for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+      assertPublicHttps(url)
+      if (allowed && !allowed.includes(url.hostname.toLowerCase())) {
+        throw new ImageBlockedError('The image host is not in the allowed list.')
+      }
+      response = await fetch(url, { signal, redirect: 'manual' })
+      // A browser hides the target of a manual redirect. Follow it only when no host list has to be checked.
+      if (response.type === 'opaqueredirect') {
+        if (allowed) throw new ImageBlockedError('Redirects cannot be checked in this runtime.')
+        response = await fetch(url, { signal })
+        break
+      }
+      const location = response.headers.get('location')
+      if (response.status < 300 || response.status >= 400 || !location) break
+      if (hop === MAX_REDIRECTS) throw new Error('Too many redirects')
+      url = new URL(location, url)
     }
-    const location = response.headers.get('location')
-    if (response.status < 300 || response.status >= 400 || !location) break
-    if (hop === MAX_REDIRECTS) throw new Error('Too many redirects')
-    url = new URL(location, url)
+    if (!response) throw new Error('No response')
+    if (!response.ok) throw new Error(`HTTP ${response.status}`)
+    const type = response.headers.get('content-type')?.split(';')[0]?.trim().toLowerCase() ?? ''
+    if (!/^image\/(png|jpe?g|gif|svg\+xml)$/.test(type)) throw new Error(`Unsupported content type "${type}"`)
+    return `data:${type};base64,${toBase64(await readCapped(response, maxBytes))}`
   }
-  if (!response) throw new Error('No response')
-  if (!response.ok) throw new Error(`HTTP ${response.status}`)
-  const type = response.headers.get('content-type')?.split(';')[0]?.trim().toLowerCase() ?? ''
-  if (!/^image\/(png|jpe?g|gif|svg\+xml)$/.test(type)) throw new Error(`Unsupported content type "${type}"`)
-  return `data:${type};base64,${toBase64(await readCapped(response))}`
 }
+
+/** The built-in loader with default limits. */
+export const fetchImage: ImageLoader = createImageLoader()
 
 export interface ImageWarning {
   src: string
@@ -184,7 +216,10 @@ export async function preloadImages(
   state: Record<string, unknown>,
   load: ImageLoader,
   warn: (w: ImageWarning) => void,
+  options: ImageLoadOptions = {},
 ): Promise<Map<string, string>> {
+  const { concurrency = 6, signal, maxBytes = MAX_IMAGE_BYTES, allowedHosts } = options
+  const allowed = allowedHosts?.map((host) => host.toLowerCase())
   const sources = collectImageSources(spec, state)
 
   const loaded = new Map<string, string>()
@@ -192,23 +227,45 @@ export async function preloadImages(
   for (const src of wanted.slice(MAX_IMAGES)) {
     warn({ src, blocked: true, message: `A spec may use at most ${MAX_IMAGES} different images.` })
   }
-  await Promise.all(
-    wanted.slice(0, MAX_IMAGES).map(async (src) => {
-      if (classifySource(src) === 'blocked') {
-        warn({ src, blocked: true, message: 'Only https URLs and data: images are allowed.' })
-        return
+  const accepted = wanted.slice(0, MAX_IMAGES)
+
+  const loadOne = async (src: string): Promise<void> => {
+    if (classifySource(src) === 'blocked') {
+      warn({ src, blocked: true, message: 'Only https URLs and data: images are allowed.' })
+      return
+    }
+    try {
+      if (allowed && classifySource(src) === 'https' && !allowed.includes(new URL(src).hostname.toLowerCase())) {
+        throw new ImageBlockedError('The image host is not in the allowed list.')
       }
-      try {
-        const data = classifySource(src) === 'data' ? src : await load(src)
-        if (classifySource(data) !== 'data') throw new Error('The loader must return a data: image')
-        if (data.length > MAX_IMAGE_BYTES * 1.4) throw new Error('Image is larger than 10 MB')
-        if (!hasImageSignature(data)) throw new Error('The data is not the image type it claims to be')
-        loaded.set(src, data)
-      } catch (error) {
-        warn({ src, blocked: false, message: error instanceof Error ? error.message : 'Could not load the image.' })
-      }
-    }),
-  )
+      const data = classifySource(src) === 'data' ? src : await load(src)
+      if (classifySource(data) !== 'data') throw new Error('The loader must return a data: image')
+      if (data.length > maxBytes * 1.4) throw new ImageBlockedError(sizeMessage(maxBytes))
+      if (!hasImageSignature(data)) throw new Error('The data is not the image type it claims to be')
+      loaded.set(src, data)
+    } catch (error) {
+      // A caller abort is not a bad image: it ends the whole render.
+      if (signal?.aborted) throw signal.reason
+      warn({
+        src,
+        blocked: error instanceof ImageBlockedError,
+        message: error instanceof Error ? error.message : 'Could not load the image.',
+      })
+    }
+  }
+
+  // A small worker pool: at most `concurrency` loads run at once, and the pool stops taking work after an abort.
+  let next = 0
+  const worker = async (): Promise<void> => {
+    for (;;) {
+      signal?.throwIfAborted()
+      const src = accepted[next++]
+      if (src === undefined) return
+      await loadOne(src)
+    }
+  }
+  const workers = Math.min(Math.max(1, concurrency), accepted.length)
+  await Promise.all(Array.from({ length: workers }, worker))
   return loaded
 }
 

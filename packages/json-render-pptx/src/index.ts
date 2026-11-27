@@ -5,4 +5,10 @@ export type { ComponentRegistry, RenderOptions, RenderWarning } from './render'
 export { standardComponents } from './components/standard'
 export type { ElementProps } from './components/standard'
 export { defaultTheme, resolveTheme, type Theme, type ThemeInput } from './theme'
-export { classifySource, fetchImage, type ImageLoader } from 'json-render-office'
+export {
+  classifySource,
+  createImageLoader,
+  fetchImage,
+  type ImageLoadOptions,
+  type ImageLoader,
+} from 'json-render-office'

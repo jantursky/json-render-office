@@ -2,13 +2,16 @@ export { walkSpec, type ComponentRegistry, type StreamedSpec, type WalkOptions }
 export { consoleWarn, type RenderWarning, type WarnHandler, type WarningCode } from './warnings'
 export {
   classifySource,
+  createImageLoader,
   hasImageSignature,
   isPrivateHost,
   fetchImage,
+  ImageBlockedError,
   IMAGE_TIMEOUT_MS,
   MAX_IMAGE_BYTES,
   preloadImages,
   sniffImageSize,
+  type ImageLoadOptions,
   type ImageSize,
   type ImageLoader,
   type ImageWarning,

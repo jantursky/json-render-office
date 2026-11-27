@@ -1,10 +1,11 @@
 import type { Spec } from '@json-render/core'
 import {
   consoleWarn,
-  fetchImage,
+  createImageLoader,
   preloadImages,
   walkSpec,
   type ComponentRegistry,
+  type ImageLoadOptions,
   type ImageLoader,
   type RenderWarning,
   type WalkOptions,
@@ -27,8 +28,10 @@ export interface RenderOptions {
   /** Merged over `spec.state`. */
   state?: Record<string, unknown>
   theme?: ThemeInput
-  /** Loads https images. Default: fetch with a 10 s timeout, a type check and a 10 MB cap. */
+  /** Loads https images. Default: the built-in loader, configured by `imageOptions`. */
   loadImage?: ImageLoader
+  /** Limits for remote images: timeout, abort signal, concurrency, byte cap and host allowlist. */
+  imageOptions?: ImageLoadOptions
   /** Receives every skipped element and unusable prop. Without it, warnings go to `console.warn`. */
   onWarn?: (warning: RenderWarning) => void
 }
@@ -67,13 +70,14 @@ async function prepare(spec: Spec, options: RenderOptions = {}): Promise<Compone
   const images = await preloadImages(
     spec,
     { ...spec.state, ...options.state },
-    options.loadImage ?? fetchImage,
+    options.loadImage ?? createImageLoader(options.imageOptions),
     (w) => {
       warn({
         code: w.blocked ? 'blocked-image' : 'image-failed',
         message: `Image "${w.src.slice(0, 80)}": ${w.message}`,
       })
     },
+    options.imageOptions,
   )
   return createDocument(spec, options, images)
 }
