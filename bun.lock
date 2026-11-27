@@ -64,9 +64,9 @@
     },
     "packages/json-render-docx": {
       "name": "json-render-docx",
-      "version": "1.0.1",
+      "version": "1.1.0",
       "dependencies": {
-        "json-render-office": "^1.0.1",
+        "json-render-office": "^1.1.0",
         "vue-docx-document": "^1.0.2",
       },
       "devDependencies": {
@@ -92,7 +92,7 @@
     },
     "packages/json-render-office": {
       "name": "json-render-office",
-      "version": "1.0.1",
+      "version": "1.1.0",
       "devDependencies": {
         "@arethetypeswrong/cli": "^0.18.5",
         "@json-render/core": "0.23.1",
@@ -114,9 +114,9 @@
     },
     "packages/json-render-pptx": {
       "name": "json-render-pptx",
-      "version": "1.0.1",
+      "version": "1.1.0",
       "dependencies": {
-        "json-render-office": "^1.0.1",
+        "json-render-office": "^1.1.0",
         "vue-pptx-document": "^1.4.0",
       },
       "devDependencies": {
@@ -142,11 +142,11 @@
     },
     "packages/json-render-report": {
       "name": "json-render-report",
-      "version": "1.0.1",
+      "version": "1.1.0",
       "dependencies": {
-        "json-render-docx": "^1.0.1",
-        "json-render-office": "^1.0.1",
-        "json-render-pptx": "^1.0.1",
+        "json-render-docx": "^1.1.0",
+        "json-render-office": "^1.1.0",
+        "json-render-pptx": "^1.1.0",
       },
       "devDependencies": {
         "@arethetypeswrong/cli": "^0.18.5",

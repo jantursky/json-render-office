@@ -4,6 +4,17 @@ All notable changes to `json-render-pptx` are listed here. The format follows [K
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-27
+
+### Added
+
+- `imageOptions` in `RenderOptions`: the same limits as the office loader (timeout, abort signal, concurrency, byte cap, host allowlist). Used when no `loadImage` is given.
+- `createImageLoader` and `ImageLoadOptions` are exported.
+
+### Changed
+
+- Requires `json-render-office` 1.1.0.
+
 ## [1.0.1] - 2026-11-18
 
 ### Fixed
@@ -21,5 +32,6 @@ All notable changes to `json-render-pptx` are listed here. The format follows [K
 - `json-render-pptx/server` exports the schema and component definitions without Vue or the PowerPoint writer, for code that only builds prompts.
 - An agent skill that tells a model how to write specs for the catalog.
 
+[1.1.0]: https://www.npmjs.com/package/json-render-pptx/v/1.1.0
 [1.0.1]: https://www.npmjs.com/package/json-render-pptx/v/1.0.1
 [1.0.0]: https://www.npmjs.com/package/json-render-pptx/v/1.0.0

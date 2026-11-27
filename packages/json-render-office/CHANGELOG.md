@@ -4,6 +4,20 @@ All notable changes to `json-render-office` are listed here. The format follows 
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-27
+
+### Added
+
+- `createImageLoader(options)` builds the default image loader with limits. `fetchImage` is the same loader with the defaults.
+- `ImageLoadOptions`: `timeoutMs` (10 s), `signal` (aborting it rejects the render), `concurrency` (6 images at once), `maxBytes` (10 MB) and `allowedHosts` (remote images from other hosts are skipped).
+- `ImageBlockedError`, the error a loader throws to report a refused source.
+- `preloadImages` takes the options as a fifth argument.
+
+### Changed
+
+- An image over the byte cap, from a loader or a `data:` URI, is reported as `blocked-image` instead of `image-failed`. It is still left out of the file.
+- With `allowedHosts` set, a browser that hides a redirect target refuses the redirect, because the target cannot be checked.
+
 ## [1.0.1] - 2026-11-18
 
 ### Fixed
@@ -22,5 +36,6 @@ All notable changes to `json-render-office` are listed here. The format follows 
 - Safe image loading: only `https:` URLs and `data:` images are read, with a 10 s timeout, a 10 MB cap and a content type check. `preloadImages` loads every `Image` source before rendering, and a custom `ImageLoader` can add a proxy or an allowlist.
 - `defineOfficeSchema` and the rules every Office catalog shares, `validateProps` for the per-component limits in the Zod schemas, and a base theme (colors, fonts, chart palette) that decks, documents and web pages read alike.
 
+[1.1.0]: https://www.npmjs.com/package/json-render-office/v/1.1.0
 [1.0.1]: https://www.npmjs.com/package/json-render-office/v/1.0.1
 [1.0.0]: https://www.npmjs.com/package/json-render-office/v/1.0.0

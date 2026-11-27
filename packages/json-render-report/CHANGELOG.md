@@ -4,6 +4,12 @@ All notable changes to `json-render-report` are listed here. The format follows 
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-27
+
+### Changed
+
+- Uses the 1.1.0 Office renderers. No API change.
+
 ## [1.0.1] - 2026-11-18
 
 ### Fixed
@@ -20,5 +26,6 @@ All notable changes to `json-render-report` are listed here. The format follows 
 - `json-render-report/server` exports the schema and component definitions without Vue or a writer.
 - An agent skill that tells a model how to write report specs.
 
+[1.1.0]: https://www.npmjs.com/package/json-render-report/v/1.1.0
 [1.0.1]: https://www.npmjs.com/package/json-render-report/v/1.0.1
 [1.0.0]: https://www.npmjs.com/package/json-render-report/v/1.0.0
